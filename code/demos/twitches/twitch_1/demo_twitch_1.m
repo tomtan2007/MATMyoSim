@@ -6,10 +6,11 @@ function demo_twitch_1
 protocol_file_string = 'protocol_1s.txt';
 model_parameters_json_file_string = 'twitch_1_model.json';
 options_file_string = 'twitch_1_options.json';
-model_output_file_string = '../../temp\twitch_1_output.myo';
+model_output_file_string = fullfile('..', '..', 'temp', 'twitch_1_output.myo');
 
 % Make sure the path allows us to find the right files
-addpath(genpath('../../../../code'));
+script_dir = fileparts(mfilename('fullpath'));
+addpath(genpath(fullfile(script_dir, '..', '..', '..', '..', 'code')));
 
 % Run a simulation
 sim_output = simulation_driver( ...
