@@ -33,6 +33,42 @@ if (startsWith(obj.kinetic_scheme, '4state_with_SRX'))
                 sum((obj.myofilaments.x + obj.parameters.x_ps) .* M4'));
 end
 
+if (startsWith(obj.kinetic_scheme, 'beard_atp'))
+    % 7-state Beard model: M3-M6 are all attached, all generate force
+    M3_indices = 2 + (1:obj.myofilaments.no_of_x_bins);
+    M4_indices = (2 + obj.myofilaments.no_of_x_bins) + (1:obj.myofilaments.no_of_x_bins);
+    M5_indices = (2 + 2*obj.myofilaments.no_of_x_bins) + (1:obj.myofilaments.no_of_x_bins);
+    M6_indices = (2 + 3*obj.myofilaments.no_of_x_bins) + (1:obj.myofilaments.no_of_x_bins);
+
+    M3 = obj.myofilaments.y(M3_indices);
+    M4 = obj.myofilaments.y(M4_indices);
+    M5 = obj.myofilaments.y(M5_indices);
+    M6 = obj.myofilaments.y(M6_indices);
+
+    obj.cb_force = ...
+        obj.parameters.cb_number_density * ...
+            obj.parameters.k_cb * 1e-9 * ...
+            (sum((obj.myofilaments.x + obj.parameters.x_ps) .* M3') + ...
+             sum((obj.myofilaments.x + obj.parameters.x_ps) .* M4') + ...
+             sum((obj.myofilaments.x + obj.parameters.x_ps) .* M5') + ...
+             sum((obj.myofilaments.x + obj.parameters.x_ps) .* M6'));
+end
+
+if (startsWith(obj.kinetic_scheme, '6state_with_SRX_and_titin'))
+    no_x = obj.myofilaments.no_of_x_bins;
+    M3_indices = 2 + (1:no_x);
+    M4_indices = (2 + no_x) + (1:no_x);
+
+    M3 = obj.myofilaments.y(M3_indices);
+    M4 = obj.myofilaments.y(M4_indices);
+
+    obj.cb_force = ...
+        obj.parameters.cb_number_density * ...
+            obj.parameters.k_cb * 1e-9 * ...
+            (sum(obj.myofilaments.x .* M3') + ...
+             sum((obj.myofilaments.x + obj.parameters.x_ps) .* M4'));
+end
+
 obj.passive_force = obj.return_passive_force(obj.hs_length);
 
 obj.hs_force = obj.cb_force + obj.passive_force;

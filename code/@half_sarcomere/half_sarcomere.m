@@ -110,6 +110,36 @@ classdef half_sarcomere < handle
                 obj.myofilaments.y(1) = 1.0;
                 obj.myofilaments.y(end-1) = 1.0;
             end
+
+            if (startsWith(obj.kinetic_scheme, 'beard_atp'))
+                % 7 states: M1(scalar), M2(scalar), M3-M6(arrays), M7(scalar)
+                % + N_off, N_on
+                obj.myofilaments.y_length = ...
+                    (4*obj.myofilaments.no_of_x_bins) + 5;
+                obj.myofilaments.y = ...
+                    zeros(obj.myofilaments.y_length,1);
+
+                % Start with all cross-bridges in M1 and all
+                % binding sites off
+                obj.myofilaments.y(1) = 1.0;
+                obj.myofilaments.y(end-1) = 1.0;
+            end
+
+            if (startsWith(obj.kinetic_scheme, '6state_with_SRX_and_titin'))
+                % 6 states: M1(scalar), M2(scalar), M3(x-array),
+                %           M4(scalar), M5(scalar), M6(x-array)
+                %           + N_off, N_on
+                % y_length = 2*no_x + 6
+                obj.myofilaments.y_length = ...
+                    (2*obj.myofilaments.no_of_x_bins) + 6;
+                obj.myofilaments.y = ...
+                    zeros(obj.myofilaments.y_length, 1);
+
+                % Start with all cross-bridges in M1 (SRX) and all
+                % binding sites off
+                obj.myofilaments.y(1) = 1.0;
+                obj.myofilaments.y(end-1) = 1.0;
+            end
                         
             % Handle other parameters
             parameter_props = hs_props.parameters;
@@ -150,7 +180,8 @@ classdef half_sarcomere < handle
         update_3state_with_SRX_and_energy_barrier(obj, time_step);
         update_4state_with_SRX(obj, time_step);
         update_4state_with_SRX_and_exp_k7(obj, time_step);
-        
+        update_beard_atp_revised(obj, time_step);
+
         move_cb_distribution(obj, delta_hsl);
         update_forces(obj);
         

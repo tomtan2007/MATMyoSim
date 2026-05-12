@@ -1,0 +1,64 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "sim_input\/model_template_exp.json",
+		"fit_mode": "fit_in_time_domain",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "temp\/best",
+		"best_opt_file_string": "temp\/best\/best_6state_control_exp.json",
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"job": [
+			{
+				"model_file_string": "temp\/model_worker_exp.json",
+				"protocol_file_string": "sim_input\/ca_protocol.txt",
+				"options_file_string": "sim_input\/sim_options.json",
+				"results_file_string": "temp\/twitch_exp.myo",
+				"target_file_string": "target\/control_c4_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_3",
+				"min_value": 0,
+				"max_value": 3,
+				"p_value": 0.7394778188,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_on",
+				"min_value": 6,
+				"max_value": 10,
+				"p_value": 1.004181384,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_off",
+				"min_value": 1,
+				"max_value": 4,
+				"p_value": 0.8144939707,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_4_0",
+				"min_value": 0,
+				"max_value": 4,
+				"p_value": 1.045811194,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_coop",
+				"min_value": -1,
+				"max_value": 2,
+				"p_value": 0.5540719115,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_0",
+				"min_value": 0,
+				"max_value": 4,
+				"p_value": 0.9548222663,
+				"p_mode": "log"
+			}
+		]
+	}
+}

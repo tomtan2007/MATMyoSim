@@ -19,8 +19,14 @@ switch (obj.kinetic_scheme)
         update_4state_with_SRX(obj, time_step); 
         
     case '4state_with_SRX_and_exp_k7'
-        update_4state_with_SRX_and_exp_k7(obj, time_step);         
-    
+        update_4state_with_SRX_and_exp_k7(obj, time_step);
+
+    case 'beard_atp_revised'
+        update_beard_atp_revised(obj, time_step);
+
+    case '6state_with_SRX_and_titin'
+        update_6state_with_SRX_and_titin(obj, time_step);
+
     otherwise
         error('Undefined kinetic scheme in half_sarcomere class');
 end
