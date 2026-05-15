@@ -16,74 +16,67 @@
         [
             {
                 "model_file_string": "temp/model_worker.json",
-                "protocol_file_string": "sim_input/ca_protocol.txt",
+                "protocol_file_string": "../../twitches/twitch_1/protocols/protocol_1s.txt",
                 "options_file_string": "sim_input/sim_options.json",
                 "results_file_string": "temp/twitch.myo",
-                "target_file_string": "target/P710R_target.txt"
+                "target_file_string": "target/H251N_target.txt"
             }
         ],
         "parameter":
         [
             {
-                "name": "k_3",
-                "min_value": 0,
-                "max_value": 3,
-                "p_value": 0.5,
+                "name": "k_1",
+                "min_value": -1,
+                "max_value": 2,
+                "p_value": 0.2712224333,
                 "p_mode": "log"
             },
             {
                 "name": "k_on",
                 "min_value": 6,
                 "max_value": 11,
-                "p_value": 0.5,
+                "p_value": 0.2589565555,
                 "p_mode": "log"
             },
             {
                 "name": "k_off",
-                "min_value": 1,
-                "max_value": 5,
-                "p_value": 0.5,
-                "p_mode": "log"
-            },
-            {
-                "name": "k_4_0",
                 "min_value": 0,
                 "max_value": 4,
-                "p_value": 0.5,
-                "p_mode": "log"
-            },
-            {
-                "name": "k_5_0",
-                "min_value": 0,
-                "max_value": 4,
-                "p_value": 0.5,
+                "p_value": 0.1885700395,
                 "p_mode": "log"
             },
             {
                 "name": "k_7_0",
                 "min_value": 0,
                 "max_value": 4,
-                "p_value": 0.5,
+                "p_value": 0.424778211,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_3",
+                "min_value": 0,
+                "max_value": 4,
+                "p_value": 0.3707290897,
                 "p_mode": "log"
             },
             {
                 "name": "k_2",
-                "min_value": -1,
-                "max_value": 0,
-                "p_value": 0.5,
+                "min_value": 0,
+                "max_value": 4,
+                "p_value": 0.619,
                 "p_mode": "log"
             },
             {
-                "name": "k_9",
+                "name": "k_4_0",
                 "min_value": 0,
-                "max_value": 1,
-                "p_value": 0.5,
+                "max_value": 4,
+                "p_value": 0.4684134852,
                 "p_mode": "log"
             },
             {
-                "name": "k_11",
+                "name": "k_coop",
                 "min_value": 0,
-                "max_value": 3,
+                "max_value": 4,
                 "p_value": 0.5,
                 "p_mode": "log"
             }

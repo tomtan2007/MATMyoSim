@@ -16,10 +16,10 @@
         [
             {
                 "model_file_string": "temp/model_worker.json",
-                "protocol_file_string": "sim_input/ca_protocol.txt",
+                "protocol_file_string": "../../twitches/twitch_1/protocols/protocol_1s.txt",
                 "options_file_string": "sim_input/sim_options.json",
                 "results_file_string": "temp/twitch.myo",
-                "target_file_string": "target/P710R_target.txt"
+                "target_file_string": "target/H251N_target.txt"
             }
         ],
         "parameter":
@@ -27,7 +27,7 @@
             {
                 "name": "k_3",
                 "min_value": 0,
-                "max_value": 3,
+                "max_value": 4,
                 "p_value": 0.5,
                 "p_mode": "log"
             },
@@ -40,8 +40,8 @@
             },
             {
                 "name": "k_off",
-                "min_value": 1,
-                "max_value": 5,
+                "min_value": 0,
+                "max_value": 4,
                 "p_value": 0.5,
                 "p_mode": "log"
             },
@@ -54,9 +54,9 @@
             },
             {
                 "name": "k_coop",
-                "min_value": -1,
-                "max_value": 2,
-                "p_value": 0.333,
+                "min_value": 0,
+                "max_value": 4,
+                "p_value": 0.5,
                 "p_mode": "log"
             }
         ]

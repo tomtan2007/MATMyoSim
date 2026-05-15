@@ -7,6 +7,7 @@ function update_6state_with_SRX_and_titin(obj, time_step)
 %            --R10->          <--R7--
 %
 % Predominant flow is clockwise: M1->M2->M3->M4->M5->M6->M1
+% Cycle M2->M3->M4->M5->M2 closes via R13 (M5->M2), which is optimized.
 % R3..R8 use the same functional forms as r3..r8 in update_4state_with_SRX_and_exp_k7.
 
 y    = obj.myofilaments.y;
@@ -108,7 +109,7 @@ obj.rate_structure.r13 = r13; obj.rate_structure.r14 = r14;
         J6 = r6 .* M4';
 
         % Bottom-row horizontal fluxes
-        J7  = r7 .* M4';
+        J7  = r7 .* M4';   % M4->M5 (detachment into titin-coupled pathway)
         J8  = r8 .* M5;
         J9  = r9  * M5;
         J10 = r10 * M6;

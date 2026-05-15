@@ -10,5 +10,6 @@ opt_structure.best_model_file_string    = fullfile('temp/best', 'model_best.json
 
 if ~isfolder('temp/best'), mkdir('temp/best'); end
 
+
 fit_controller(opt_structure);
 end

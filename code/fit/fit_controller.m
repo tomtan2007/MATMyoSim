@@ -13,6 +13,17 @@ for i=1:numel(opt_structure.parameter)
     p_vector(i) = opt_structure.parameter{i}.p_value;
 end
 
+% Append p_values from constraint parameter_multipliers
+if (isfield(opt_structure, 'constraint'))
+    for i = 1 : numel(opt_structure.constraint)
+        if (isfield(opt_structure.constraint{i}, 'parameter_multiplier'))
+            for j = 1 : numel(opt_structure.constraint{i}.parameter_multiplier)
+                p_vector(end+1) = opt_structure.constraint{i}.parameter_multiplier{j}.p_value;
+            end
+        end
+    end
+end
+
 % Set up for optimization
 best_e = inf;
 all_e_values = [];
@@ -21,18 +32,7 @@ best_p = p_vector;
 
 fh = @(x)run_trial(x, opt_structure);
 
-s.solver = 'particleswarm';
-s.objective = fh;
-s.nvars = numel(p_vector);
-s.lb = zeros(numel(p_vector),1);
-s.ub = ones(numel(p_vector),1);
-s.options = optimoptions('particleswarm','Display','iter');
-
-% particleswarm(s);
-
-fminsearch(fh, p_vector);
-% n = numel(p_vector);
-% ga(fh, n, [],[],[],[], zeros(n,1), ones(n,1));
+fminsearch(fh, p_vector, optimset('Display', 'iter', 'MaxFunEvals', 5000));
 
     function e = run_trial(p_vector, opt_structure)
 
@@ -49,10 +49,12 @@ fminsearch(fh, p_vector);
         
         if (e <= best_e)
             best_e = e;
-            y_best = y_attempt
+            y_best = y_attempt;
             best_p = p_vector;
-            copyfile(opt_structure.model_working_file_string, ...
-                opt_structure.best_model_file_string);
+            if (isfield(opt_structure, 'model_working_file_string'))
+                copyfile(opt_structure.model_working_file_string, ...
+                    opt_structure.best_model_file_string);
+            end
             
             % Update best_opt_file
             best_opt_job = opt_structure;
@@ -60,6 +62,10 @@ fminsearch(fh, p_vector);
                 best_opt_job.parameter{i}.p_value = p_vector(i);
             end
             out_string = savejson('MyoSim_optimization', best_opt_job);
+            best_opt_dir = fileparts(opt_structure.best_opt_file_string);
+            if (~isempty(best_opt_dir) && ~isfolder(best_opt_dir))
+                mkdir(fullfile(cd, best_opt_dir));
+            end
             of = fopen(opt_structure.best_opt_file_string,'w');
             fprintf(of,'%s',out_string);
             fclose(of);

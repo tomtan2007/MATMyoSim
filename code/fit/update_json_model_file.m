@@ -127,9 +127,9 @@ fclose(out_file);
 
     % Nested function
     function update_model_struct(par_string, par_value)
-        % Find the model field
-        vi = find(cellfun(@(model_fields) ~isempty(model_fields), ...
-            strfind(model_fields, par_string)));
+        needle = ['.' par_string];
+        vi = find(cellfun(@(f) endsWith(f, needle) || strcmp(f, par_string), ...
+            model_fields));
 
         % Check
         if (numel(vi)==0)

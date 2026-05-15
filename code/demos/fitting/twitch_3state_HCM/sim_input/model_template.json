@@ -9,7 +9,7 @@
         "hs_props":
         {
             "kinetic_scheme": "3state_with_SRX_and_exp_k4",
-            "hs_length": 1300,
+            "hs_length": 1265,
             "myofilaments":
             {
                 "bin_min": -10,

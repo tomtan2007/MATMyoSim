@@ -21,9 +21,35 @@ if (target_stats.max == target_stats.min)
     error('target_data has no range');
 end
 
-e = sum(((y_attempt(end-target_stats.n+1:end) - target_data)./ ...
-            (target_stats.max - target_stats.min)).^2) / ...
-            target_stats.n;
+% Baseline-shift sim to match passive level; compute error over active region only
+y_window = y_attempt(end-target_stats.n+1:end);
+
+baseline_range = target_stats.min + 0.05 * (target_stats.max - target_stats.min);
+first_active = find(target_data > baseline_range, 1, 'first');
+
+if isempty(first_active) || first_active < 2
+    first_active = 1;
+    baseline_y = y_window(1);
+    baseline_t = target_data(1);
+else
+    passive_idx = 1:(first_active-1);
+    if numel(passive_idx) > 5
+        late_passive = passive_idx(round(0.5*end):end);
+        baseline_y = mean(y_window(late_passive));
+        baseline_t = mean(target_data(late_passive));
+    else
+        baseline_y = mean(y_window(passive_idx));
+        baseline_t = mean(target_data(passive_idx));
+    end
+end
+
+y_window_bs = y_window - baseline_y + baseline_t;
+
+active_idx = first_active:numel(target_data);
+n_active   = numel(active_idx);
+
+e = sum(((y_window_bs(active_idx) - target_data(active_idx))./ ...
+            (target_stats.max - target_stats.min)).^2) / n_active;
 
 % Plot result
 if (p.figure_time_fit);
