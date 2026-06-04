@@ -1,0 +1,123 @@
+Sweeping k_1 (best=14.66) ...
+Sweeping k_force (best=0.0005) ...
+Sweeping k_2 (best=146.6) ...
+Sweeping k_3 (best=2010) ...
+[Warning: Failure at t=8.324989e-04.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (1.734723e-18)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=8.477490e-18.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (2.465190e-32)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=1.208682e-31.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (3.503246e-46)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=1.893893e-45.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (4.978412e-60)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=2.646533e-59.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (7.074749e-74)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=3.366071e-73.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (1.005382e-87)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=4.763928e-87.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (1.428734e-101)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=6.787234e-101.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (2.030353e-115)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=9.850811e-115.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (2.885306e-129)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=1.336129e-128.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (4.100266e-143)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+[Warning: Failure at t=2.012803e-142.  Unable to meet integration tolerances
+without reducing the step size below the smallest value allowed (5.826829e-157)
+at time t.] 
+[> In ode23 (line 246)
+In half_sarcomere/update_3state_with_SRX_and_exp_k4 (line 44)
+In half_sarcomere/evolve_kinetics (line 13)
+In half_sarcomere/implement_time_step (line 7)
+In muscle/implement_time_step (line 12)
+In simulation/implement_protocol (line 162)
+In parameter_sweep_all_3state_HCM (line 59)] 
+  ERROR at mult=3.162: Objective function is returning undefined values at initial point. FSOLVE cannot continue.
+Sweeping k_4_0 (best=82.19) ...
+Sweeping k_4_1 (best=0.1) ...
+Sweeping k_cb (best=0.001) ...
+Sweeping k_on (best=1e+06) ...
+Sweeping k_off (best=14.05) ...
+Sweeping k_coop (best=100) ...
+Saved: /Users/tomtan/Research/MATMyoSim/code/demos/fitting/twitch_3state_HCM/temp/sweeps_all/sweep_all_3state.png
+Done — 3-state sweep complete.

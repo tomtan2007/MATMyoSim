@@ -1,0 +1,171 @@
+{
+    "plan": "Run 3-state, 4-state, 6-state HCM fits sequentially. Then compare AIC. Then parameter sweep all three.",
+    "sequence": ["4state", "3state", "6state", "sweep"],
+    "current_step": "complete",
+    "current_opt": "optimization.json",
+
+    "params": {
+        "3state": ["k_1","k_on","k_off","k_3","k_4_0"],
+        "4state": ["k_1","k_on","k_off"],
+        "6state": ["k_1","k_on","k_off","k_9"]
+    },
+
+    "results": {
+        "3state": {
+            "error": 0.03796,
+            "aic": -3192.47,
+            "n_params": 5,
+            "n_active": 979,
+            "k_1": 0.342,
+            "k_on": 1.535e7,
+            "k_off": 10.0,
+            "k_3": 16.74,
+            "k_4_0": 12.04,
+            "notes": "k_off at hard lower bound (p=0.000, 10 s⁻¹). k_1=0.34 low — 3-state lacks power stroke dynamics. ΔAIC vs 6-state = +1577 → worst model."
+        },
+        "4state": {
+            "error": 0.007651,
+            "aic": -4764.64,
+            "n_params": 3,
+            "k_1": 1.002,
+            "k_on": 3.234e7,
+            "k_off": 10.45,
+            "notes": "k_off near lower bound (p=0.019). Good fit. ΔAIC vs 6-state = -4.48 → loses to 6-state."
+        },
+        "6state": {
+            "error": 0.007600,
+            "aic": -4769.12,
+            "n_params": 4,
+            "n_active": 979,
+            "k_1": 1.11,
+            "k_on": 1.0e8,
+            "k_off": 32.1,
+            "k_9": 1.0,
+            "notes": "WINNER. k_on at upper bound (p=0.9998, ~1e8) — FLAG FOR PI. k_9 at lower bound (1 s⁻¹) — titin pathway engaged. k_1=1.11 s⁻¹ HCM-plausible (~4x control)."
+        }
+    },
+
+    "aic_comparison": {
+        "winner": "6state",
+        "table": {
+            "3state": -3192.47,
+            "4state": -4764.64,
+            "6state": -4769.12
+        },
+        "delta_aic": {
+            "4state_vs_6state": 4.48,
+            "3state_vs_6state": 1576.65
+        },
+        "interpretation": "6-state wins with ΔAIC=4.48 vs 4-state (moderate support, >2 threshold). 3-state ruled out (ΔAIC=1577)."
+    },
+
+    "sweep_results": {
+        "3state": {
+            "k_1":   {"range_s": [0.200, 0.398, 0.794, 1.585, 3.162], "peak_Nm2": [3251, 17767, 97415, 158721, 183215], "SRX": [0.996, 0.990, 0.967, 0.850, 0.618]},
+            "k_on":  {"range_M1s1": [1.58e6, 2.51e6, 3.98e6, 6.31e6, 1.0e7], "peak_Nm2": [319, 544, 974, 1898, 4297]},
+            "k_off": {"range_s": [12.6, 15.9, 20.0, 25.1, 31.6], "peak_Nm2": [6696, 4228, 2820, 1959, 1402]},
+            "k_3":   {"range_s": [2.0, 3.98, 7.94, 15.9, 31.6], "peak_Nm2": [383, 877, 2378, 9887, 68707]},
+            "k_4_0": {"range_s": [2.0, 3.98, 7.94, 15.9, 31.6], "peak_Nm2": [170103, 101866, 25216, 6850, 2285]}
+        },
+        "4state": {
+            "k_1":  {"range_s": [0.200, 0.398, 0.794, 1.585, 3.162], "peak_Nm2": [742, 1784, 5533, 24652, 30589], "SRX": [0.999, 0.998, 0.996, 0.992, 0.978]},
+            "k_on": {"range_M1s1": [1.58e6, 2.51e6, 3.98e6, 6.31e6, 1.0e7], "peak_Nm2": [6.7, 10.2, 16.8, 31.7, 84.9]},
+            "k_off":{"range_s": [12.6, 15.9, 20.0, 25.1, 31.6], "peak_Nm2": [6413, 4162, 2406, 469, 107]}
+        },
+        "6state": {
+            "k_1":  {"range_s": [0.200, 0.398, 0.794, 1.585, 3.162], "peak_Nm2": [646, 1517, 4457, 23548, 29867], "SRX": [0.999, 0.998, 0.996, 0.992, 0.981]},
+            "k_on": {"range_M1s1": [1.58e6, 2.51e6, 3.98e6, 6.31e6, 1.0e7], "peak_Nm2": [1.5, 2.4, 4.0, 6.7, 11.6]},
+            "k_off":{"range_s": [12.6, 15.9, 20.0, 25.1, 31.6], "peak_Nm2": [20259, 20199, 20086, 19785, 10064], "SRX": [0.829, 0.833, 0.886, 0.992, 0.995]},
+            "k_9":  {"range_s": [2.0, 3.98, 7.94, 15.9, 31.6], "peak_Nm2": [9562, 9557, 9548, 9529, 9493], "SRX": [0.995, 0.995, 0.995, 0.995, 0.995]}
+        },
+        "key_finding": "k_1 is the dominant HCM force driver across ALL models: 46× force increase over sweep range (6-state). k_9 (titin coupling) contributes <1% to peak force — titin pathway engaged by fitting but not a peak-force driver. k_off (Ca deactivation) is second most sensitive: lower k_off → more force AND more SRX depletion (more activation).",
+        "for_julia": "Primary input to heart geometry model: k_1 (SRX exit rate). HCM fitted value: 1.11 s⁻¹ (~4x estimated control ~0.3 s⁻¹). This drives SRX→DRX transition, increasing attached crossbridges and peak force. At HCM k_1 value, SRX drops from ~99.9% to ~99.2% during activation — small but highly nonlinear in force output."
+    },
+
+    "sweep_all_results": {
+        "method": "All kinetic params swept at x0.1, x0.316, x1.0, x3.16, x10 of best-fit value. Zero-valued params (k_8, k_10) swept from baseline=0.01. Run 2026-05-18.",
+        "output_files": {
+            "3state": "twitch_3state_HCM/temp/sweeps_all/sweep_all_3state.png",
+            "4state": "twitch_4state_HCM/temp/sweeps_all/sweep_all_4state.png",
+            "6state": "twitch_6state_HCM/temp/sweeps_all/sweep_all_6state.png"
+        },
+        "3state": {
+            "best_peak_force_Nm2": 11363,
+            "sensitivity_ranking": [
+                {"param": "k_cb",  "effect": "positive", "force_range_Nm2": [981, 690728],   "note": "60x range — strongest driver overall"},
+                {"param": "k_4_0", "effect": "inverse",  "force_range_Nm2": [424, 201920],   "note": "Detachment rate — lower = more force"},
+                {"param": "k_2",   "effect": "inverse",  "force_range_Nm2": [317, 176159],   "note": "SRX entry — higher k_2 = traps myosin off, kills force"},
+                {"param": "k_off", "effect": "inverse",  "force_range_Nm2": [340, 143505],   "note": "Ca deactivation — lower k_off = prolonged activation"},
+                {"param": "k_3",   "effect": "positive", "force_range_Nm2": [314, 253714],   "note": "Attachment rate"},
+                {"param": "k_on",  "effect": "positive", "force_range_Nm2": [307, 147757],   "note": "Ca activation"},
+                {"param": "k_force","effect": "positive","force_range_Nm2": [2918, 183055],  "note": "Force-velocity sensitivity"},
+                {"param": "k_1",   "effect": "positive", "force_range_Nm2": [296, 184942],   "note": "SRX exit — HCM driver"},
+                {"param": "k_coop","effect": "inverse",  "force_range_Nm2": [3761, 18367],   "note": "Thin filament cooperativity — weak"},
+                {"param": "k_4_1", "effect": "positive", "force_range_Nm2": [9680, 104745],  "note": "Load sensitivity of detachment — modest"}
+            ]
+        },
+        "4state": {
+            "best_peak_force_Nm2": 9628,
+            "sensitivity_ranking": [
+                {"param": "k_on",  "effect": "positive", "force_range_Nm2": [13, 20347],     "note": "CRITICAL — force→0 at x0.1; currently near optimum"},
+                {"param": "k_off", "effect": "inverse",  "force_range_Nm2": [13, 20347],     "note": "CRITICAL — symmetric to k_on; force→0 at x10"},
+                {"param": "k_cb",  "effect": "positive", "force_range_Nm2": [717, 113195],   "note": "12x increase at x10"},
+                {"param": "k_4_0", "effect": "inverse",  "force_range_Nm2": [507, 43787],    "note": "Detachment — strong inverse"},
+                {"param": "k_2",   "effect": "inverse",  "force_range_Nm2": [539, 36139],    "note": "SRX entry — strong inverse"},
+                {"param": "k_7_0", "effect": "inverse",  "force_range_Nm2": [7299, 42908],   "note": "Exponential detachment rate — inverse"},
+                {"param": "k_1",   "effect": "positive", "force_range_Nm2": [341, 36208],    "note": "SRX exit — 3.8x at x10"},
+                {"param": "k_3",   "effect": "positive", "force_range_Nm2": [536, 38166],    "note": "Attachment rate — 4x at x10"},
+                {"param": "k_5_0", "effect": "positive", "force_range_Nm2": [869, 36188],    "note": "Power stroke forward — 3.8x"},
+                {"param": "k_6_0", "effect": "NONE",     "force_range_Nm2": [9628, 9628],    "note": "Reverse power stroke — ZERO EFFECT"},
+                {"param": "k_6_1", "effect": "NONE",     "force_range_Nm2": [9618, 9629],    "note": "Reverse stroke load-dep — negligible"},
+                {"param": "k_8",   "effect": "negligible","force_range_Nm2": [9607, 9834],   "note": "<2% range"},
+                {"param": "k_coop","effect": "negligible","force_range_Nm2": [9498, 10058],  "note": "<5% range"}
+            ]
+        },
+        "6state": {
+            "best_peak_force_Nm2": 9564,
+            "sensitivity_ranking": [
+                {"param": "k_on",  "effect": "positive", "force_range_Nm2": [12, 20363],     "note": "CRITICAL — force→0 at x0.1; best-fit at upper bound"},
+                {"param": "k_off", "effect": "inverse",  "force_range_Nm2": [12, 20363],     "note": "CRITICAL — symmetric; best-fit near midrange"},
+                {"param": "k_2",   "effect": "inverse",  "force_range_Nm2": [538, 36064],    "note": "SRX entry — strong inverse"},
+                {"param": "k_4_0", "effect": "inverse",  "force_range_Nm2": [507, 43786],    "note": "Detachment — strong inverse"},
+                {"param": "k_3",   "effect": "positive", "force_range_Nm2": [533, 38146],    "note": "Attachment rate — 4x"},
+                {"param": "k_1",   "effect": "positive", "force_range_Nm2": [334, 36140],    "note": "SRX exit — 3.8x; primary HCM driver"},
+                {"param": "k_5_0", "effect": "positive", "force_range_Nm2": [855, 35607],    "note": "Power stroke forward — 3.7x"},
+                {"param": "k_cb",  "effect": "positive", "force_range_Nm2": [707, 25403],    "note": "2.7x at x10"},
+                {"param": "k_11",  "effect": "positive", "force_range_Nm2": [3289, 18804],   "note": "Vertical DRX→DRX (k_H) — moderate 2x effect"},
+                {"param": "k_12",  "effect": "inverse",  "force_range_Nm2": [2778, 18782],   "note": "Vertical DRX←DRX (k_-H) — moderate inverse"},
+                {"param": "k_6_0", "effect": "NONE",     "force_range_Nm2": [9564, 9564],    "note": "Reverse power stroke — ZERO EFFECT (exactly flat)"},
+                {"param": "k_6_1", "effect": "NONE",     "force_range_Nm2": [9564, 9564],    "note": "Reverse stroke load-dep — ZERO EFFECT"},
+                {"param": "k_8",   "effect": "negligible","force_range_Nm2": [9564, 9570],   "note": "<0.1% — bypass rate not active"},
+                {"param": "k_9",   "effect": "negligible","force_range_Nm2": [9543, 9566],   "note": "<0.3% — titin coupling negligible (as before)"},
+                {"param": "k_10",  "effect": "negligible","force_range_Nm2": [9565, 9684],   "note": "<1.3% — small"},
+                {"param": "k_13",  "effect": "negligible","force_range_Nm2": [9331, 9564],   "note": "<2.5% at x0.1"},
+                {"param": "k_14",  "effect": "negligible","force_range_Nm2": [9562, 9564],   "note": "<0.02%"},
+                {"param": "k_coop","effect": "negligible","force_range_Nm2": [9242, 10210],  "note": "<7% — weak in 6-state"}
+            ]
+        },
+        "cross_model_findings": {
+            "universal_drivers": "k_1 (SRX exit), k_3 (attachment), k_on (Ca activation) — positive in all models. k_2 (SRX entry), k_4_0 (detachment), k_off (Ca deactivation) — strong inverse in all models.",
+            "k_6_0_finding": "Reverse power stroke (k_6_0, k_6_1) has ZERO effect on peak force in both 4-state and 6-state — model is insensitive to back-stroke rate. Can be fixed or removed.",
+            "titin_specific": "6-state titin params k_8, k_9, k_10, k_13, k_14 all <1-2% effect. k_11/k_12 (vertical DRX transitions) have modest ~2x effect.",
+            "hcm_mechanism_for_julia": "k_1 (SRX exit rate): best-fit 1.11 s⁻¹ in HCM vs ~0.3 s⁻¹ control. Increasing k_1 from 0.1x to 10x of HCM value gives 334→36140 N/m² (108x range). This is THE primary force-driving knob.",
+            "p710r_paper_consistency": "P710R paper (Vander Roest 2021): 12.9x increase in k_-SRX (=k_1). Our H251N fit shows ~3.7x increase. Both confirm SRX disruption as primary HCM mechanism."
+        }
+    },
+
+    "decisions": [
+        "2026-05-17 15:01: Started 4-state (k_1, k_on, k_off, Campbell bounds). PID 67884.",
+        "2026-05-17 16:04: 4-state done. error=0.00765, AIC=-4764.64. k_on=3.23e7 (matches Campbell). k_off=10.45 near bound but accepted.",
+        "2026-05-17 16:04: Started 3-state (5 params). PID 73118.",
+        "2026-05-17 17:45: 3-state done. error=0.03796, AIC=-3192.47. k_off at hard bound. ΔAIC(3vs4)=+1572 → 3-state weakest. Started 6-state PID 81162.",
+        "2026-05-17 18:15: 6-state done. error=0.007600, AIC=-4769.12. ΔAIC(4vs6)=+4.48 → 6-STATE WINS. Flags: k_on upper bound, k_9 lower bound (titin engaged). k_1=1.11 s⁻¹.",
+        "2026-05-17 18:15: Launched sweeps: 3-state PID 83561, 4-state PID 83562, 6-state PID 83563.",
+        "2026-05-17 18:47: ALL SWEEPS COMPLETE. k_1 dominant driver (46× force increase over sweep range in 6-state). k_9 negligible (<1% force effect). Pipeline COMPLETE.",
+        "2026-05-18 15:17: Launched ALL-parameter sweeps (x0.1-x10 of best-fit) for all 3 models in parallel. PIDs: 3s=19670, 4s=19673, 6s=19676.",
+        "2026-05-18 15:18: ALL-PARAMETER SWEEPS COMPLETE. Key new findings: k_6_0/k_6_1 (reverse power stroke) = ZERO effect. k_8/k_9/k_10/k_13/k_14 (titin params) negligible. k_11/k_12 (vertical DRX transitions) show modest 2x effect. Universal drivers confirmed: k_1, k_3, k_5_0, k_on (positive); k_2, k_4_0, k_off (inverse). See sweep_all_results for full ranking."
+    ],
+
+    "started": "2026-05-17 15:01:38",
+    "completed": "2026-05-18 15:18"
+}

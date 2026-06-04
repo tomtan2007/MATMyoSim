@@ -1,0 +1,19 @@
+Sweeping k_1 ...
+  p=0.1  k_1=0.1995  peak=742.4  SRX=0.999
+  p=0.2  k_1=0.3981  peak=1784.2  SRX=0.998
+  p=0.3  k_1=0.7943  peak=5532.5  SRX=0.996
+  p=0.4  k_1=1.585  peak=24652.0  SRX=0.992
+  p=0.5  k_1=3.162  peak=30589.4  SRX=0.978
+Sweeping k_on ...
+  p=0.1  k_on=1.585e+06  peak=6.7  SRX=0.997
+  p=0.2  k_on=2.512e+06  peak=10.2  SRX=0.997
+  p=0.3  k_on=3.981e+06  peak=16.8  SRX=0.997
+  p=0.4  k_on=6.31e+06  peak=31.7  SRX=0.997
+  p=0.5  k_on=1e+07  peak=84.9  SRX=0.996
+Sweeping k_off ...
+  p=0.1  k_off=12.59  peak=6412.7  SRX=0.996
+  p=0.2  k_off=15.85  peak=4162.4  SRX=0.996
+  p=0.3  k_off=19.95  peak=2406.4  SRX=0.996
+  p=0.4  k_off=25.12  peak=468.8  SRX=0.996
+  p=0.5  k_off=31.62  peak=106.8  SRX=0.996
+Saved temp/sweeps/sweep_4state.png

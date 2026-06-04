@@ -1,0 +1,43 @@
+Sweeping k_1 ...
+  p=0.1  k_1=13.26  peak=6623.5  SRX=0.928
+  p=0.2  k_1=16.6  peak=8128.2  SRX=0.903
+  p=0.3  k_1=20.77  peak=9789.2  SRX=0.870
+  p=0.4  k_1=26  peak=11553.8  SRX=0.827
+  p=0.5  k_1=32.55  peak=13329.2  SRX=0.774
+Sweeping k_3 ...
+  p=0.1  k_3=2.512  peak=2888.8  SRX=0.896
+  p=0.2  k_3=6.31  peak=7797.9  SRX=0.859
+  p=0.3  k_3=15.85  peak=18445.3  SRX=0.763
+  p=0.4  k_3=39.81  peak=37521.9  SRX=0.631
+  p=0.5  k_3=100  peak=51036.9  SRX=0.499
+Sweeping k_on ...
+  p=0.1  k_on=1.585e+06  peak=349.5  SRX=0.910
+  p=0.2  k_on=2.512e+06  peak=603.4  SRX=0.908
+  p=0.3  k_on=3.981e+06  peak=1090.8  SRX=0.904
+  p=0.4  k_on=6.31e+06  peak=2091.3  SRX=0.897
+  p=0.5  k_on=1e+07  peak=4197.6  SRX=0.882
+Sweeping k_off ...
+  p=0.1  k_off=11.75  peak=10385.0  SRX=0.834
+  p=0.2  k_off=13.8  peak=8458.0  SRX=0.850
+  p=0.3  k_off=16.22  peak=6840.5  SRX=0.863
+  p=0.4  k_off=19.05  peak=5486.6  SRX=0.873
+  p=0.5  k_off=22.39  peak=4374.4  SRX=0.881
+Sweeping k_5_0 ...
+  p=0.1  k_5_0=2.239  peak=98.4  SRX=0.892
+  p=0.2  k_5_0=5.012  peak=216.6  SRX=0.891
+  p=0.3  k_5_0=11.22  peak=468.3  SRX=0.890
+  p=0.4  k_5_0=25.12  peak=978.5  SRX=0.886
+  p=0.5  k_5_0=56.23  peak=1931.1  SRX=0.880
+Sweeping k_7_0 ...
+  p=0.1  k_7_0=2.512  peak=3988.9  SRX=0.804
+  p=0.2  k_7_0=6.31  peak=7011.1  SRX=0.803
+  p=0.3  k_7_0=15.85  peak=14748.0  SRX=0.793
+  p=0.4  k_7_0=39.81  peak=17467.5  SRX=0.786
+  p=0.5  k_7_0=100  peak=10967.2  SRX=0.832
+Sweeping k_coop ...
+  p=0.1  k_coop=0.1995  peak=16644.7  SRX=0.761
+  p=0.2  k_coop=0.3981  peak=15895.9  SRX=0.766
+  p=0.3  k_coop=0.7943  peak=14985.5  SRX=0.776
+  p=0.4  k_coop=1.585  peak=13582.7  SRX=0.795
+  p=0.5  k_coop=3.162  peak=11652.7  SRX=0.824
+Saved temp/sweeps/sweep_6state.png

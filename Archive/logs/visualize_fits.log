@@ -1,0 +1,152 @@
+  Saved /Users/tomtan/Research/MATMyoSim/code/demos/fitting/twitch_3state_HCM/temp/fit_output_3state.png
+Running 4state ...
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 180)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+Running 3state ...
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In visualize_best_fits (line 49)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 180)
+In visualize_best_fits (line 49)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 154)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Unable to generate graphics because of system configuration or
+graphics resource constraint. See <a
+href="https://www.mathworks.com/support/requirements/matlab-system-requirements.html">MATLAB
+System Requirements</a> or contact <a
+href="https://www.mathworks.com/support/contact_us.html">MathWorks technical
+support</a>.] 
+[> In initialise_publication_quality_figure (line 324)
+In simulation/show_output (line 16)
+In visualize_best_fits (line 49)] 
+  Saved /Users/tomtan/Research/MATMyoSim/code/demos/fitting/twitch_4state_HCM/temp/fit_output_4state.png
+Running 6state ...
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In visualize_best_fits (line 49)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 154)
+In visualize_best_fits (line 49)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 208)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In visualize_best_fits (line 49)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 208)
+In visualize_best_fits (line 49)] 
+  Saved /Users/tomtan/Research/MATMyoSim/code/demos/fitting/twitch_3state_HCM/temp/fit_output_3state.png
+Running 4state ...
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 180)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In visualize_best_fits (line 49)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 180)
+In visualize_best_fits (line 49)] 
+  Saved /Users/tomtan/Research/MATMyoSim/code/demos/fitting/twitch_6state_HCM/temp/fit_output_6state.png
+Done. Figures saved to each model temp/ directory.
+  Saved /Users/tomtan/Research/MATMyoSim/code/demos/fitting/twitch_4state_HCM/temp/fit_output_4state.png
+Running 6state ...
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 208)
+In simulation/implement_protocol (line 316)
+In visualize_best_fits (line 42)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 95)
+In visualize_best_fits (line 49)] 
+[Warning: Calling legend with multiple outputs will not be supported in a future
+release.] 
+[> In legend (line 47)
+In legendflex (line 311)
+In simulation/show_output (line 208)
+In visualize_best_fits (line 49)] 
+  Saved /Users/tomtan/Research/MATMyoSim/code/demos/fitting/twitch_6state_HCM/temp/fit_output_6state.png
+Done. Figures saved to each model temp/ directory.

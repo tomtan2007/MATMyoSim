@@ -196,7 +196,41 @@ transition rates might be formulated mathematically.
   - **k_7_0 in HCM template**: changed 104 → 100 (consistency with R3/R5 starting values). Control template still 104 — flag for review.
   - **Removed stale Stop hook** from `.claude/settings.json` (referenced non-existent /Users/tcbnu/... paths).
   - Launched 3/4/6-state HCM fits. Initial 6-state evals: e dropped from 1.89 → 0.15 quickly. Fits still running in background as of session close.
-- Next: review fit results when 3/4/6-state HCM fits complete; compute AIC; verify M2345 cycle is dominant in best-fit (vs full M123456 loop) via population trajectories; clarify Beard rewiring; revisit k_7_0=100 vs 104 question; consider running control demos too with the new pipeline.
+- [2026-05-15] Completed HCM twitch fitting for all three models against H251N_target.txt. Final results:
+  - 3-state (5p): e=0.03206, ΔAIC=+221
+  - 4-state (5p): e=0.00561, ΔAIC=+20
+  - 6-state (8p): e=0.00155, ΔAIC=0 (winner)
+  - 6-state free params: k_1, k_on, k_off, k_7_0, k_3, k_2, k_4_0, k_coop. k_13 fixed at 5000 in template.
+  - Best fit values: k_1≈3.7 s⁻¹, k_on≈4.45×10⁶ M⁻¹s⁻¹, k_off≈1 s⁻¹, k_7_0≈28 s⁻¹, k_3≈16 s⁻¹, k_2≈252 s⁻¹, k_4_0≈30 s⁻¹, k_coop≈249.
+  - Progressive fitting strategy: started 3p, added k_3, then k_2+k_4_0, then k_coop. Each addition mechanistically justified.
+  - k_13 fixed at 5000 (removing it from free params improved fit: e 0.00288→0.00231).
+  - Cleaned fit_controller.m (removed stale particleswarm block, MaxFunEvals→5000), evaluate_time_fit.m (concise comment), update_json_model_file.m.
+  - Committed as edacd1a. Pushed to fork (tomtan2007/MATMyoSim) and Julia's repo (juliasyh/MATmyosim_6state), both on 6state-model branch.
+- [2026-05-15] Known caveats in HCM fit results — bring up with PI:
+  - k_2≈252 s⁻¹ is implausible for SRX entry (Filip paper k_DT≈0.026 s⁻¹, ~10,000× smaller). Likely optimizer artifact.
+  - k_off≈1 s⁻¹ at lower bound — cardiac troponin should be 10–100 s⁻¹. Do NOT expand lower bound further.
+  - k_coop≈249 is very high (typical cardiac: single digits to low tens). May be compensating for something structural.
+  - Detachment form inconsistency: 3-state uses polynomial k_4_0, 4/6-state use exponential k_7_0. AIC comparison is not fully apples-to-apples.
+  - Different search bounds across models (3-state has wider k_on/k_off range than 4-state).
+  - fminsearch is local — single starting point, may not be global optimum.
+  - Single cell data (H251N_c63) — no validation across cells.
+  - 6-state wins but AIC margin is uncertain until detachment forms are made consistent.
+- Next: bring fit caveats to PI; consider constraining k_2 upper bound (max_value=2 → ≤100 s⁻¹) and rerunning; refit 3-state with polynomial detachment for fair AIC comparison; run control twitch fits with same pipeline; clarify Beard rewiring.
+- [2026-06-01] Diagnosed bad May 31 fits: k_on/k_off starting points (p=0.5) placed Ca affinity at pCa 5.5, outside the experimental range (pCa 6.72→6.12). Fix: use p_on=0.75, p_off=0.02 → Kd ≈ pCa 6.48 (correct window). This produces real twitch shapes instead of linear ramps.
+- [2026-06-01] Refitted 4-state control/HCM and 6-state control/HCM with corrected starting points. Results:
+  - 4-state control: e=0.025 (was 0.119) — dramatic improvement, real twitch shape
+  - 4-state HCM: e=0.202 (was 0.259) — still poor; architectural limitation (k_4_0=10 fixed)
+  - 6-state control: e=0.021 (was 0.013) — slightly worse, different local min
+  - 6-state HCM: e=0.047 (was 0.067) — improved
+  - 3-state still wins AIC both conditions. ΔAIC(3s vs 6s HCM) = 908.
+- [2026-06-01] Generated parameter sweep figures for all 6 models (original style: force+SRX vs param, log x-axis). Scripts: parameter_sweep_*.m, plot_all_params_spaced.m, plot_sweeps_interactive.m.
+- [2026-06-02] Major repo cleanup:
+  - Deleted unused kinetic schemes (2-state, 3-state basic variants, 4-state basic, old Beard)
+  - Deleted unused demos (getting_started, ramps, myofibrils, pCa demos, time_domain demos)
+  - Deleted unused fit functions (Nyquist, XML, sinusoidal), tools/, batch/, generate_protocols/
+  - Archived logs, old figures, diagnostic scripts to archive/ dirs
+  - Cleaned stale files from twitch_* dirs (ca_protocol.txt, P710R targets, smoke tests, optimization_p*.json)
+  - Repo now contains only active files for 6-state HCM fitting project
 
 ## Lab Meeting Notes
 - Lab meeting 2026-05-07 at 2pm
