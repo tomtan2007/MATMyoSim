@@ -10,10 +10,10 @@
 		"job": [
 			{
 				"model_file_string": "temp\/model_worker.json",
-				"protocol_file_string": "..\/..\/twitches\/twitch_1\/protocols\/protocol_1s.txt",
+				"protocol_file_string": "..\/..\/System\/protocols\/protocol_1s.txt",
 				"options_file_string": "sim_input\/sim_options.json",
 				"results_file_string": "temp\/twitch.myo",
-				"target_file_string": "target\/Con_target.txt"
+				"target_file_string": "..\/..\/System\/target_data\/Con_target.txt"
 			}
 		],
 		"parameter": [
@@ -21,49 +21,42 @@
 				"name": "k_1",
 				"min_value": -1,
 				"max_value": 2,
-				"p_value": 0.4182608885,
+				"p_value": 0.7426704545,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_3",
 				"min_value": 0,
 				"max_value": 4,
-				"p_value": 0.1470474601,
+				"p_value": 0.2530044563,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_on",
 				"min_value": 6,
 				"max_value": 8,
-				"p_value": 0.6763313608,
+				"p_value": 0.7980847352,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_off",
-				"min_value": 1,
+				"min_value": 1.7,
 				"max_value": 2,
-				"p_value": 0.02375298509,
+				"p_value": 0.7885999212,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_5_0",
 				"min_value": 0,
 				"max_value": 3,
-				"p_value": 0.999999671,
-				"p_mode": "log"
-			},
-			{
-				"name": "k_7_0",
-				"min_value": 0,
-				"max_value": 4,
-				"p_value": 0.485959371,
+				"p_value": 1.000006131,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_coop",
 				"min_value": -1,
-				"max_value": 2,
-				"p_value": 0.5117868901,
+				"max_value": 0.76,
+				"p_value": 6.509475019e-06,
 				"p_mode": "log"
 			}
 		],

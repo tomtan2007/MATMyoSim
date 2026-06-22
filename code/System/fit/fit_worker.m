@@ -1,6 +1,13 @@
 function [e, trial_e, sim_output, y_attempt, target_data] = ...
     fit_worker(p_vector,opt_structure)
 
+% Quadratic penalty for p outside [0,1] — makes cost increase sharply
+% outside bounds so fminsearch naturally stays within them
+boundary_penalty = 1e4 * (sum(max(0, p_vector - 1).^2) + sum(max(0, -p_vector).^2));
+
+% Clamp for simulation (parameters use bounded values regardless)
+p_vector = max(0, min(1, p_vector));
+
 % Get the number of jobs in the optimization task
 no_of_jobs = numel(opt_structure.job);
 
@@ -12,9 +19,6 @@ for job_counter = 1 : no_of_jobs
                         opt_structure, job_counter, p_vector, ...
                         all_models);
 end
-
-% Run batch
-run_batch(opt_structure);
 
 switch opt_structure.fit_mode
     case 'fit_pCa_curve'
@@ -88,8 +92,8 @@ switch opt_structure.fit_mode
 
 end
 
-% Calculate e
-e = mean(trial_e);
+% Calculate e, adding boundary penalty to discourage OOB exploration
+e = mean(trial_e) + boundary_penalty;
 fprintf('  eval: e=%.4f  p=[%s]\n', e, num2str(p_vector, '%.3f '));
 
   

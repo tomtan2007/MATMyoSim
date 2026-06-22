@@ -34,36 +34,29 @@
             {
                 "name": "k_3",
                 "min_value": 0,
-                "max_value": 3,
+                "max_value": 2.3,
                 "p_value": 0.5,
                 "p_mode": "log"
             },
             {
                 "name": "k_on",
-                "min_value": 5,
+                "min_value": 7,
                 "max_value": 8,
-                "p_value": 0.5,
+                "p_value": 0.9515,
                 "p_mode": "log"
             },
             {
                 "name": "k_off",
-                "min_value": 0,
-                "max_value": 2,
-                "p_value": 0.5,
-                "p_mode": "log"
-            },
-            {
-                "name": "k_4_0",
-                "min_value": 0,
-                "max_value": 4,
-                "p_value": 0.5,
+                "min_value": 1.7,
+                "max_value": 2.3,
+                "p_value": 1.0,
                 "p_mode": "log"
             },
             {
                 "name": "k_coop",
                 "min_value": -1,
-                "max_value": 2,
-                "p_value": 0.333,
+                "max_value": 1.0,
+                "p_value": 0.5,
                 "p_mode": "log"
             }
         ]

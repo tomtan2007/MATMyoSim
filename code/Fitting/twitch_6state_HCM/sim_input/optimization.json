@@ -1,19 +1,13 @@
 {
-    "MyoSim_optimization":
-    {
+    "MyoSim_optimization": {
         "model_template_file_string": "sim_input/model_template.json",
-
         "fit_mode": "fit_in_time_domain",
         "fit_variable": "muscle_force",
-
         "best_model_folder": "temp/best",
         "best_opt_file_string": "temp/best/best_6state_HCM.json",
-
         "figure_current_fit": 0,
         "figure_optimization_progress": 0,
-
-        "job":
-        [
+        "job": [
             {
                 "model_file_string": "temp/model_worker.json",
                 "protocol_file_string": "../../System/protocols/protocol_1s.txt",
@@ -22,55 +16,47 @@
                 "target_file_string": "../../System/target_data/H251N_target.txt"
             }
         ],
-        "parameter":
-        [
+        "parameter": [
             {
                 "name": "k_1",
-                "min_value": 1.025,
+                "min_value": 0.999978,
                 "max_value": 2,
-                "p_value": 0.500,
+                "p_value": 0.5,
                 "p_mode": "log"
             },
             {
                 "name": "k_3",
-                "min_value": 0,
-                "max_value": 4,
-                "p_value": 0.450,
+                "min_value": 0.828934,
+                "max_value": 2.3,
+                "p_value": 0.5,
                 "p_mode": "log"
             },
             {
                 "name": "k_on",
-                "min_value": 6,
+                "min_value": 7,
                 "max_value": 8,
-                "p_value": 0.75,
+                "p_value": 0.5,
                 "p_mode": "log"
             },
             {
                 "name": "k_off",
-                "min_value": 1,
-                "max_value": 1.7,
-                "p_value": 0.02,
+                "min_value": 1.7,
+                "max_value": 2.3,
+                "p_value": 0.5,
                 "p_mode": "log"
             },
             {
                 "name": "k_5_0",
-                "min_value": 0,
-                "max_value": 3.5,
-                "p_value": 0.300,
-                "p_mode": "log"
-            },
-            {
-                "name": "k_7_0",
-                "min_value": 0,
-                "max_value": 4,
-                "p_value": 0.450,
+                "min_value": 1.7,
+                "max_value": 3.6778,
+                "p_value": 0.5,
                 "p_mode": "log"
             },
             {
                 "name": "k_coop",
-                "min_value": -1,
-                "max_value": 2,
-                "p_value": 0.450,
+                "min_value": -0.859949,
+                "max_value": 1.0,
+                "p_value": 0.5,
                 "p_mode": "log"
             }
         ]

@@ -1,7 +1,7 @@
 {
-	"best_error": 0.01861768961,
-	"n_free_params": 6,
+	"best_error": 0.05525475772,
+	"n_free_params": 5,
 	"n_active_points": 979,
-	"aic": -3887.986591,
-	"timestamp": "2026-05-31 14:24:32"
+	"aic": -2824.989012,
+	"timestamp": "2026-06-08 20:24:48"
 }

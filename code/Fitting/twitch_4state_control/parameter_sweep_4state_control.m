@@ -1,19 +1,22 @@
 function parameter_sweep_4state_control(opt_file)
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')), '..', '..', '..')));
+repo_root = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..');
+addpath(genpath(repo_root));
+addpath(genpath(fullfile(repo_root, 'Code', 'System')));
 cd(fileparts(mfilename('fullpath')));
-if nargin < 1, opt_file = 'optimization.json'; end
+if nargin < 1, opt_file = 'sim_input/optimization.json'; end
 
 opt   = loadjson(opt_file);
 opt_s = opt.MyoSim_optimization;
 params = opt_s.parameter;
 
 model_best      = loadjson('temp/best/model_best.json');
+best_opt        = loadjson(opt_s.best_opt_file_string);
+best_params     = best_opt.MyoSim_optimization.parameter;
 protocol_file   = opt_s.job{1}.protocol_file_string;
 options_file    = opt_s.job{1}.options_file_string;
 temp_model_file = 'temp/sweep_model.json';
 
-p_sweep  = [0.1, 0.2, 0.3, 0.4, 0.5];
-n_sweep  = length(p_sweep);
+n_sweep  = 5;
 ca_onset = 352;
 
 if ~isfolder('temp/sweeps'), mkdir('temp/sweeps'); end
@@ -27,13 +30,22 @@ for pi = 1:n_params
     param_name = par.name;
     fprintf('Sweeping %s ...\n', param_name);
 
+    % Find optimal p_value for this parameter from best_*.json
+    p_opt = 0.5;  % default fallback
+    for bi = 1:length(best_params)
+        if strcmp(best_params{bi}.name, param_name)
+            p_opt = best_params{bi}.p_value;
+            break;
+        end
+    end
+    actual_best = return_parameter_value(par, p_opt);
+    actual_vals = actual_best * 10.^linspace(-1, 1, n_sweep);
+
     peak_forces  = zeros(1, n_sweep);
     srx_baseline = zeros(1, n_sweep);
-    actual_vals  = zeros(1, n_sweep);
 
     for si = 1:n_sweep
-        actual_val      = return_parameter_value(par, p_sweep(si));
-        actual_vals(si) = actual_val;
+        actual_val = actual_vals(si);
 
         model = model_best;
         model.MyoSim_model.hs_props.parameters.(param_name) = actual_val;
@@ -47,8 +59,8 @@ for pi = 1:n_params
         peak_forces(si)  = max(sim_out.muscle_force);
         srx_baseline(si) = mean(sim_out.M1(1:ca_onset, 1));
 
-        fprintf('  p=%.1f  %s=%.4g  peak=%.1f  SRX=%.3f\n', ...
-            p_sweep(si), param_name, actual_val, peak_forces(si), srx_baseline(si));
+        fprintf('  %s=%.4g  peak=%.1f  SRX=%.3f\n', ...
+            param_name, actual_val, peak_forces(si), srx_baseline(si));
     end
 
     subplot(2, n_params, pi);
@@ -69,7 +81,7 @@ for pi = 1:n_params
     box off; grid on;
 end
 
-sgtitle('4-state Control: peak force and SRX vs parameter', 'FontSize', 13);
+sgtitle('4-State Control', 'FontSize', 13);
 saveas(fig, 'temp/sweeps/sweep_4state_control.png');
 fprintf('Saved temp/sweeps/sweep_4state_control.png\n');
 end
