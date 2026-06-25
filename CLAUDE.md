@@ -232,6 +232,192 @@ transition rates might be formulated mathematically.
   - Cleaned stale files from twitch_* dirs (ca_protocol.txt, P710R targets, smoke tests, optimization_p*.json)
   - Repo now contains only active files for 6-state HCM fitting project
 
+- [2026-06-07] Major repo reorganization and cleanup:
+  - Moved engine files from `code/@*/` → `Code/System/@*/` and `Code/System/fit/`
+  - Moved fitting demos from `code/demos/fitting/` → `Code/Fitting/`
+  - Consolidated shared data: `System/protocols/protocol_1s.txt`, `System/target_data/`, `System/experimental_data/`
+  - Consolidated all archive/results folders into single top-level `Archive/`
+  - Fixed all path references across all optimization.json, demo scripts, parameter sweep scripts, plot scripts
+  - Fixed bug: `plot_all_fits.m` target path still pointed to deleted per-demo `target/` folders — fixed to `System/target_data/`
+  - Fixed bug: demo scripts defaulted to `optimization.json` but file is in `sim_input/` — fixed to `sim_input/optimization.json`
+  - All 33 critical file references verified with Python path checker — zero issues
+  - Committed (751 files, commit 15f47e0) and pushed to juliasyh/MATmyosim_6state (6state-model branch), no Claude attribution
+- [2026-06-07] Read Lewalle et al. 2024 (Biophysical Journal): "Cardiac LDA driven by force-dependent thick-filament dynamics." Key finding: total force feedback on SRX→DRX transition (K_OFF = K_OFF⁰ × (1 + k_force × F_total)) can alone account for Frank-Starling. Mechanism already implemented in 6-state model as r1 = k_1 × (1 + k_force × hs_force). k_force currently fixed at 5e-4 — could be floated as free param to test if HCM needs higher feedback gain.
+
+- [2026-06-08] PI meeting feedback processed. Implemented the following changes to fitting pipeline:
+  - **Optimization bounds**: k_coop max_value 2→1 (≤10); k_on p_value starting point → 0.9515 (=8×10⁷); k_4_0 removed from 3-state free params; k_7_0 removed from 4-state HCM and 6-state HCM free params; k_1 lower bound restored in 6-state HCM; k_off min_value unified to 1 across all models.
+  - **Parameter sweep fix**: all 6 `parameter_sweep_*.m` scripts now center sweep on each param's optimal p_value (±0.25 around p_opt, clamped to [0.05, 0.95]) instead of fixed p=[0.1…0.5].
+  - **Sequential ctrl→HCM fitting**: new `Code/Fitting/update_hcm_bounds_from_ctrl.py` sets each HCM parameter's search range to [ctrl_best ÷ 10, ctrl_best × 10] (±1 log unit) after ctrl fit completes. Enforces PI's ≤10× ctrl/HCM ratio constraint by construction. Shell script `/tmp/run_all_6fits.sh` updated for sequential pairs.
+  - **Optimizer boundary enforcement**: added quadratic penalty in `fit_worker.m` (`1e4 × (p-1)²` above p=1, `1e4 × p²` below p=0). fminsearch is unconstrained — penalty makes cost blow up outside [0,1], keeping simplex in bounds.
+  - **Bug fixes (critical)**:
+    - Renamed `@run_fit_*.m` → `demo_fit_*.m` in all 6 demo folders — MATLAB couldn't find functions because filename ≠ function name.
+    - Removed stale `run_batch(opt_structure)` call from `fit_worker.m` — old worktree version had a bug (`{i}` using MATLAB's imaginary unit) that crashed every fit.
+    - Added `addpath(genpath(fullfile(repo_root,'Code','System')))` to all 6 demo run scripts — `.claude/worktrees/` were shadowing Code/System/fit/ functions (fit_worker, evaluate_time_fit, update_json_model_file) with old broken versions.
+    - VS Code MATLAB extension: set `matlab.matlabInstallPath` in settings.json.
+  - **MATLAB license issue**: macOS keychain broken after root password change. Workaround: open MATLAB GUI to re-authenticate (credentials stay in MathWorks Service Host for current session). License backup file at `~/Desktop/matlab_license_backup.mwlicx` — import via Help→Licensing→Activate Software for permanent fix.
+- [2026-06-08] Fit results (penalty-bounded, sequential ctrl→HCM):
+  - 4-state ctrl: e=0.014, AIC=-4090 (WINNER control)
+  - 6-state ctrl: e=0.017, AIC=-3935
+  - 3-state ctrl: e=0.038, AIC=-3163
+  - 6-state HCM: e=0.114, AIC=-2115 (WINNER HCM)
+  - 3-state HCM: e=0.143, AIC=-1891
+  - 4-state HCM: e=0.368, AIC=-966 (4-state fails HCM completely)
+  - **Key finding**: 6-state is the only model that fits both conditions reasonably. HCM driver: k_3 ~3× higher than control (attachment rate), thin filament params (k_on, k_off, k_5_0) essentially unchanged.
+- [2026-06-08] Read Ježek et al. (nihms-2138115) Table 2 and Campbell 2018 (PIIS0006349518307707). Key comparison:
+  - k_off: Campbell fixes at 100 s⁻¹ (our floor 10 s⁻¹ is 10× too low — **raise min_value to 1.7, i.e. ≥50 s⁻¹**)
+  - k_on: Campbell fitted ~2×10⁷ (our template 8×10⁷ — 4× higher, but fitted values land in plausible range)
+  - k_coop: Campbell fitted 5.7 (our fits find 0.1–1 — too low; ceiling of 10 is correct)
+  - k_cb = 0.001 N/m, N_0 = 6.9×10¹⁶ m⁻² — exact match ✅
+  - Ježek SRX/DRX rates (k_H=18, k_-H=1.8 s⁻¹) are NOT directly comparable to twitch rates — different experimental context (unloaded biochemical vs active contraction)
+- [2026-06-08] Remaining action items for next session:
+  - Raise k_off lower bound to 50 s⁻¹ (min_value=1.7) in all optimization.json files ✓ DONE
+  - Clarify Ca transient with PI (our protocol_1s.txt: onset 0.48s, duration ~400ms — PI says may be too slow)
+  - Run final fits with k_off floor fix and check k_coop values (expect ~5 based on Campbell)
+  - Commit all code changes to git
+- [2026-06-08] Batch optimization.json / sweep script fixes (this session):
+  - **Sweep clipping fixed** (all 6 parameter_sweep_*.m): was clipping to [0.05, 0.95], now [0, 1.0]. Bug: k_1 and k_on in 3-state ctrl had p_opt=1.0 → sweep [0.75,0.95] missed optimal point.
+  - **k_off floor** → 50 s⁻¹ (min_value=1.7): applied to all 6 optimization.json. Previous fits: 4-state ctrl k_off=10.3, 4-state HCM=10, 6-state ctrl=10 (all were at old floor).
+  - **k_coop max** → 0.85 (cap ≈7 s⁻¹): applied to all 6 optimization.json. Previous: 4-state ctrl/HCM hitting ceiling of 10; 6-state ctrl=7.6; 6-state HCM=8.0.
+  - **k_on starting point** → p_value=0.5 (=10^7 M⁻¹s⁻¹): was 0.9515 (near upper boundary) in 3-state ctrl, 4-state ctrl, 6-state ctrl.
+  - **k_7_0 removed from 4-state ctrl free params**: fixed at template value 104 s⁻¹. Reduces free params from 7→6, reduces AIC penalty. User wants to keep measured paper values for detachment rates.
+  - **k_7_0 fixed for 6-state ctrl and HCM**: removed from free params; templates set to 16 s⁻¹ from Ježek et al. Table 2 (k_R = 16 s⁻¹, R→D_T transition = M4(AT)→M5(DRXT)). Old values: ctrl 104, HCM 438.
+  - **Pending**: After current 6-state ctrl fit (PID 83259) completes, re-run update_hcm_bounds_from_ctrl.py → then re-run all 6 fits.
+
+- [2026-06-10] Session work: passive baseline fix, sweep redesign, repo cleanup, parameter verification.
+  - **Passive force baseline fix** (`Code/Fitting/run_desktop_models.m`): old code used `mean(mf(1:pre_n))` — includes initialization ramp (muscle_force starts ~1241, ramps to ~4655 by row ~100), leaving ~300 N/m² residual. Fixed to `mean(mf(onset_idx-50:onset_idx-1))` (50 rows just before Ca onset = equilibrated flat region). Title changed to "Slow vs normal protocol".
+  - **k_7_0 paper value decision**: tested Ježek 16 s⁻¹ vs Campbell 104 s⁻¹ empirically. Campbell 104 gave e=0.057 vs Ježek 16 gave e=0.083 (214 AIC units better). Fixed at 104 s⁻¹ for 4-state ctrl and 6-state ctrl/HCM. 4-state HCM model_best.json still has old value 438 — template was not updated, needs refit.
+  - **Parameter sweep redesigned** (all 6 `parameter_sweep_*.m` scripts): changed from p-space linspace (clipped) to log-spaced actual values: `actual_vals = actual_best * 10.^linspace(-1, 1, 5)`. Sweeps 0.1× to 10× best-fit in 5 equal log steps regardless of bounds. This is purely for sensitivity analysis; PI confirmed sweep both directions even if hitting bounds.
+  - **Sweep titles updated**: all 6 scripts now use `sgtitle('N-State [Control|HCM]', ...)` format.
+  - **SRX=NaN fix** (3-state and 4-state sweep scripts): scripts were missing `addpath(genpath(fullfile(repo_root,'Code','System')))` — `.claude/worktrees/` was shadowing old kinetic scheme files that don't output M1 correctly. Added explicit addpath to all 4 scripts.
+  - **Repo cleanup**: deleted ~20+ stale PNGs, redundant plot scripts, scratch/diagnostic files.
+  - **Parameter table verified** (read directly from model_best.json):
+
+    | Param | 3s-ctrl | 3s-HCM | 4s-ctrl | 4s-HCM | 6s-ctrl | 6s-HCM |
+    |-------|---------|--------|---------|--------|---------|--------|
+    | k_1 (s⁻¹) | 1.22 | 8.93 | 16.9 | 4.99 | 100⚠️ | 100⚠️ |
+    | k_3 (s⁻¹) | 27.7 | 216 | 10.3 | 50.5 | 67.4 | 148 |
+    | k_on (M⁻¹s⁻¹) | 1.67e7 | 2.30e6 | 3.95e7 | 1.99e7 | 1.56e7 | 4.66e6 |
+    | k_off (s⁻¹) | 97.8 | 64.0 | 86.4 | 50.1 | 100⚠️ | 69.0 |
+    | k_5_0 (s⁻¹) | — | — | 1000⚠️ | 1000⚠️ | 476 | 4726⚠️ |
+    | k_7_0 (s⁻¹) | — | — | 104🔒 | 438❌ | 104🔒 | 104🔒 |
+    | k_coop | 0.1⚠️ | 0.1⚠️ | 0.1⚠️ | 0.32 | 1.38 | 0.14⚠️ |
+    | k_4_0 (s⁻¹) | 100🔒 | 100🔒 | 10🔒 | 10🔒 | 10🔒 | 10🔒 |
+
+    Note: k_2 = 10×k_1 always (hardcoded ratio in model, not independently fitted). ⚠️=at bound, ❌=known bug, 🔒=fixed.
+
+  - **Open items carried forward**:
+    - Fix 4-state HCM template k_7_0: 438 → 104, then refit
+    - k_5_0 hitting ceiling (1000 or 4726 s⁻¹) in 4-state ctrl/HCM and 6-state HCM — discuss with PI
+    - k_1 at ceiling (100 s⁻¹) in 6-state ctrl/HCM — discuss with PI
+    - k_coop at floor (0.1) in 3/4-state ctrl/HCM and 6-state HCM — expect ~5 from Campbell
+    - Ca transient timing: confirm with PI (protocol_1s.txt onset 0.48s, duration ~400ms)
+    - Commit all pending code changes to git
+
+- [2026-06-24] Final fit run for this round: floated k_7_1 (detachment strain sensitivity, per PI 6/22 request) and released k_4_0 in 6-state ctrl/HCM (8 free params total). Fixed 4-state HCM template bug (k_7_0 438→104) and refit. Results:
+  - 6-state ctrl: e=0.0237, AIC=-3610.4 (winner, ΔAIC vs 4-state +741, vs 3-state +911)
+  - 6-state HCM: e=0.0425, AIC=-3075.4 (winner, ΔAIC vs 3-state +250, vs 4-state +992)
+  - 4-state HCM improved e=0.154→0.118 from template fix alone, but still loses decisively to 6-state and 3-state
+  - k_1 ceiling issue resolved — fitted values now 6.76 (ctrl) and 11.6 (HCM) s⁻¹, well inside [0.1,100] bound, HCM>ctrl as mechanistically expected
+  - k_7_1 shows large ctrl→HCM increase (0.116→0.806, ~7×) — candidate force/HCM-driving parameter alongside k_1, both directionally consistent and worth reporting to Julia pending PI review
+  - New flags: k_coop pinned at ceiling (10) in 6-state HCM; k_4_0 pinned at ceiling (100) in 6-state HCM — both newly active/released params, may need wider bounds in next round
+  - All 6 model fits (3/4/6-state × ctrl/HCM) now complete and consistent (same protocol_1s.txt, same active-window error metric, k_7_0 bug fixed everywhere)
+- Next: bring k_coop/k_4_0 ceiling hits and the k_7_1 HCM finding to PI; consider widening k_4_0 and k_coop upper bounds; run parameter sweeps on k_7_1 and k_4_0 to visualize force sensitivity; package k_1 and k_7_1 ctrl-vs-HCM deltas as the force-increasing parameter set for Julia's model.
+
+## Key Technical Rules (always apply these)
+
+### MATLAB
+- **Max 2 MATLAB instances** simultaneously — 3+ silently crashes (license limit; log stays at 0 bytes)
+- **Wait for cross-shell MATLAB**: use `while kill -0 $PID 2>/dev/null; do sleep 10; done` — `bash wait` only works for child processes of the same shell
+- **Absolute paths in sweep scripts**: `mkdir('temp/sweeps_all')` silently fails in batch mode. Always use `fileparts(mfilename('fullpath'))` to anchor paths
+- **nanmean removed in R2026a**: use `mean(X, dim, 'omitnan')` instead
+- **k_2 is NOT a free parameter**: `update_json_model_file.m` auto-sets k_2 = 10×k_1 after writing all params. Never add k_2 to optimization parameter list
+- **plot_all_fits.m must mirror evaluate_time_fit.m**: optimizer takes LAST n rows of simulation. Use `sim_window = sim_all(end - n_tgt + 1 : end)` then align late passive region — NOT mean of first rows
+
+### MATLAB path / worktrees shadowing
+`.claude/worktrees/` sorts before `Code/` alphabetically — old engine files shadow current ones. All demo and sweep scripts must include:
+```matlab
+addpath(genpath(fullfile(repo_root, 'Code', 'System')));
+```
+AFTER the main genpath call. Demo scripts must be named `demo_fit_*.m` (not `@run_fit_*.m`).
+
+### Optimizer bounds
+- **Use quadratic penalty in fit_worker.m** — NOT fmincon (fails on ODE sims, gradient≈0) and NOT clamping alone (simplex escapes to p=42):
+  ```matlab
+  boundary_penalty = 1e4 * (sum(max(0, p_vector - 1).^2) + sum(max(0, -p_vector).^2));
+  ```
+- **k_on/k_off starting points**: Kd = k_off/k_on must fall inside pCa 6.72→6.12. Use p_on=0.75, p_off=0.02 → Kd ≈ pCa 6.48. Default p=0.5 gives Kd≈pCa 5.5 (outside window → optimizer produces ramp not twitch)
+- **HCM starting points**: always bias k_1 starting point above ctrl best-fit value — starting below ctrl puts optimizer in wrong basin (k_5_0 hits ceiling instead)
+
+### Figure display
+- View figures: `open path/to/figure.png` (opens Preview immediately)
+- Keep MATLAB plots live: `open -a /Applications/MATLAB_R2026a.app --args -r "script_name"` (not -batch)
+- Multiple figures: `open fig1.png fig2.png fig3.png fig4.png`
+- Helper: `Code/Fitting/open_all_figures.m` opens all 4 diagnostic figures
+
+---
+
+## Key Papers
+
+| Paper | Key Finding | Relevance |
+|---|---|---|
+| Vander Roest 2021 PNAS | P710R HCM: 12.9× k_-SRX increase; 27% SRX vs WT; SRX disruption = hypercontractility | Justifies k_1↑ as primary HCM mechanism |
+| Lewalle 2024 Biophys J | Force-dependent SRX→DRX (total force, Paradigm A) explains Frank-Starling; k_force=1.48e-4 Pa⁻¹ | Validates titin-coupled 6-state; Tom's k_force=5e-4 is 3× higher |
+| Jezek/Beard 2026 poster | 6-state (DT,DD,A1,A2,ST,SD); ATP/ADP/Pi explicit; RV trabeculae 2 vs 8 mM ATP: ~20 kPa difference | Beard Lab (same building) parallel work — confirms architecture |
+| Pilagov 2025 JMRCM | Cy3-ATP pulse-chase: porcine myofibrils baseline 68% DRX; mavacamten→5.2% DRX; dATP→84.8% DRX | Ground truth DRX/SRX ratio; mavacamten = pharmacological inverse of HCM |
+
+Paper files: `~/Downloads/PIIS0006349524003527.pdf` (Lewalle), `~/Downloads/2026-myofilament-poster-v5.pdf` (Jezek), `~/Downloads/s10974-025-09712-z.pdf` (Pilagov)
+
+---
+
+## Current Fit State (as of 2026-06-24)
+
+Floating k_7_1 (strain sensitivity of detachment) and releasing k_4_0 (per PI 6/22 request) resolved the k_1-ceiling bottleneck. 4-state HCM k_7_0 template bug fixed (438→104) and refit. **All final fits complete — 6-state now wins AIC decisively in both conditions.**
+
+| Model | Error | AIC | ΔAIC (within condition) | Notes |
+|---|---|---|---|---|
+| **Control** | | | | |
+| 6-state ctrl | 0.0237 | -3610.4 | 0 (winner) | k_1 off ceiling (6.76 s⁻¹) |
+| 4-state ctrl | 0.0511 | -2869.5 | +741.0 | |
+| 3-state ctrl | 0.0611 | -2699.2 | +911.2 | |
+| **HCM** | | | | |
+| 6-state HCM | 0.0425 | -3075.4 | 0 (winner) | k_1 off ceiling (11.6 s⁻¹) |
+| 3-state HCM | 0.0553 | -2825.0 | +250.4 | |
+| 4-state HCM | 0.1176 | -2083.2 | +992.2 | improved from e=0.154 after k_7_0 template fix |
+
+**6-state free params (8): k_1, k_3, k_on, k_off, k_5_0, k_coop, k_7_1, k_4_0**
+
+Key fitted values (6-state):
+| Param | ctrl | HCM | Notes |
+|---|---|---|---|
+| k_1 (s⁻¹) | 6.76 | 11.6 | off ceiling now; HCM > ctrl as expected (k_-SRX driver) |
+| k_3 (s⁻¹) | 169 | 117 | |
+| k_on (M⁻¹s⁻¹) | 1.24e7 | 8.45e7 | HCM near upper bound — flag |
+| k_off (s⁻¹) | 50.1 | 50.1 | both at floor (min_value=1.7→50 s⁻¹) — flag |
+| k_4_0 (s⁻¹) | 71.4 | 100 ⚠️ | HCM at ceiling — newly released param, may need wider bound |
+| k_5_0 (s⁻¹) | 633 | 812 | both elevated, no hard ceiling hit |
+| k_7_1 | 0.116 | 0.806 ⚠️ | ~7× higher in HCM — large load-sensitivity increase; newly floated param, drives much of the fit improvement |
+| k_coop | 0.330 | 9.999 ⚠️ | HCM at ceiling (cap=10) — flag, expect ~5 per Campbell 2018 |
+
+**Open issues / flags for PI:**
+1. k_coop pinned at ceiling (10) for 6-state HCM — consider raising cap or check if this is compensating for something structural
+2. k_4_0 at ceiling (100 s⁻¹) for 6-state HCM — newly released param, may need wider upper bound
+3. k_7_1 jumps ~7× (0.116→0.806) ctrl→HCM — biologically this says HCM heads are far more load-sensitive in detachment; worth flagging as a candidate "force-increasing parameter" for Julia, pending PI sanity check
+4. k_off at floor (50 s⁻¹) in both 6-state conditions — same value both conditions, so not HCM-discriminating
+5. k_on near upper bound in 6-state HCM (8.45e7, bound max 1e8) — check headroom
+6. 4-state HCM still loses badly (ΔAIC +992) — architecture genuinely cannot capture HCM phenotype even with bug fixes
+7. Candidate force/HCM-driving parameters to report to Julia: k_1 (SRX exit), k_7_1 (load-sensitivity of detachment) — both show clear, consistent ctrl→HCM shifts in the same direction across fits
+
+---
+
 ## Lab Meeting Notes
-- Lab meeting 2026-05-07 at 2pm
+
+### 2026-05-07
+- Lab meeting at 2pm
 - Beard collaboration: revise m4/m7 interactions → m1/m6
+
+### 2026-06-22
+- **Ca transient does play a role** — PI confirmed. Align timing better: compare protocol_1s.txt Ca onset (row 353, t=0.353s) against experimental cell traces; adjust protocol file or add time offset to fitting.
+- **k_4_0 upper limit** — PI asked if k_4_0 can be released. Currently fixed at 10 s⁻¹ (4/6-state). Try floating it with upper bound ~100 s⁻¹ and see if HCM fits improve.
+- **k_7_0 vs k_7_1 difference** — r7 = k_7_0 × exp(−k_cb × x × k_7_1 / kT). k_7_0 = base detachment rate at zero strain (s⁻¹, currently 104). k_7_1 = dimensionless strain sensitivity — higher value = faster drop in detachment rate as x increases (load-sensitive). Positive x (post-power-stroke) → lower r7 → heads stay attached longer.
+- **Force calculation** — cb_force = k_cb × 1e-9 × sum((x + x_ps) × M_attached). k_cb [N/m] × (x + x_ps) [nm] × population. x_ps=5nm shifts reference so M4 heads are at positive extension. Verify k_cb=0.001 N/m and cb_number_density=6.9×10¹⁶ m⁻² reproduce experimental peak force (~4000–9000 N/m²).
+- **Floating k_7_1 → better results** — Action: add k_7_1 to optimization.json free params for 6-state models and refit.
