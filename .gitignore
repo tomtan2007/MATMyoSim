@@ -1,4 +1,19 @@
+# macOS
+.DS_Store
+
+# MATLAB autosave / build
 **/*.asv
+**/slprj/**
+
+# Jekyll leftovers
 **/_site/**
 Gemfile.lock
-**/fitting/time_domain_3/**
+
+# Transient fitting run artifacts (results in temp/best and temp/sweeps are kept)
+**/temp/model_worker*.json
+**/temp/sweep_model.json
+**/temp/*.log
+**/temp/*.done
+**/temp/*.flag
+**/temp/*.pid
+**/temp/best_*/

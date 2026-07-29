@@ -1,0 +1,94 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "sim_input\/model_template.json",
+		"fit_mode": "fit_in_time_domain",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "temp\/best",
+		"best_opt_file_string": "temp\/best\/best_6state_control.json",
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"job": [
+			{
+				"model_file_string": "temp\/model_worker.json",
+				"protocol_file_string": "..\/..\/System\/protocols\/protocol_1s.txt",
+				"options_file_string": "sim_input\/sim_options.json",
+				"results_file_string": "temp\/twitch.myo",
+				"target_file_string": "..\/..\/System\/target_data\/Con_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_1",
+				"min_value": -1,
+				"max_value": 2,
+				"p_value": 0.5828781141,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_3",
+				"min_value": 0,
+				"max_value": 2.3,
+				"p_value": 0.6088670135,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_on",
+				"min_value": 7,
+				"max_value": 8.3,
+				"p_value": 0.4783687245,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_off",
+				"min_value": 1,
+				"max_value": 2.3,
+				"p_value": 0.06884895863,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_5_0",
+				"min_value": 1.7,
+				"max_value": 4,
+				"p_value": 0.2961576541,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_coop",
+				"min_value": -1,
+				"max_value": 1.3,
+				"p_value": 1.000000126,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_1",
+				"min_value": -1,
+				"max_value": 1,
+				"p_value": 1.527159539e-06,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_4_0",
+				"min_value": 0,
+				"max_value": 2.5,
+				"p_value": 0.6860942506,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_2",
+				"min_value": -0.523,
+				"max_value": 1,
+				"p_value": 0.9532072199,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_3",
+				"min_value": 0.477,
+				"max_value": 1,
+				"p_value": 0.8257199329,
+				"p_mode": "log"
+			}
+		],
+		"model_working_file_string": "temp\/model_worker.json",
+		"best_model_file_string": "temp\/best\/model_best.json"
+	}
+}

@@ -323,6 +323,88 @@ transition rates might be formulated mathematically.
   - All 6 model fits (3/4/6-state × ctrl/HCM) now complete and consistent (same protocol_1s.txt, same active-window error metric, k_7_0 bug fixed everywhere)
 - Next: bring k_coop/k_4_0 ceiling hits and the k_7_1 HCM finding to PI; consider widening k_4_0 and k_coop upper bounds; run parameter sweeps on k_7_1 and k_4_0 to visualize force sensitivity; package k_1 and k_7_1 ctrl-vs-HCM deltas as the force-increasing parameter set for Julia's model.
 
+- [2026-06-25 to 2026-06-28] Major multi-session fitting campaign. Summary of key work:
+
+  **Bound diagnostics and fixes (2026-06-25):**
+  - Widened 4 bounds: k_off floor 50→10 s⁻¹, k_coop ceiling 10→20, k_4_0 ceiling 100→316 s⁻¹, k_on ceiling 1e8→2e8. Major AIC improvement: 6-state ctrl -3610→-4449, HCM -3075→-4002.
+  - k_4_0 and k_on: resolved (no longer pinned). k_off and k_coop: still pinned — see flags below.
+  - k_off floor lowered further to 1 s⁻¹ — ctrl found interior at ~13 s⁻¹ (good), HCM still near 10 s⁻¹.
+  - k_coop still climbing at ceiling 20 in both conditions. AIC cost of capping at 10: +166 units ctrl, +265 units HCM. Flag for PI.
+  - Ca timing "129ms lag": confirmed measurement artifact. Real Ca→force lag = 26–36ms (physiological). `protocol_1s.txt` is correct. Diagnostic shift test confirmed: shifting 129 rows earlier made AIC -4449→-1593.
+
+  **Unphysical basin fix (2026-06-26/27):**
+  - HCM fit with k_off floor=1 s⁻¹ found degenerate solution (k_on=1e7 at floor, k_off=3 s⁻¹, k_1 at lower bound). AIC looked good but physically meaningless.
+  - Fix: raised HCM-specific floors (k_off min_value=1.0→10 s⁻¹, k_on min_value=7→7.3=2e7). Restarted with k_1 biased above ctrl value. Found correct physical basin.
+
+  **Full refit of all 6 models (2026-06-27):**
+  - All 3/4-state optimization.json files updated with matched bounds: k_off floor=10 s⁻¹, k_on floor=2e7 (note: 3/4-state still have k_on min=7=1e7 — only 6-state HCM has stricter 2e7 floor).
+  - All 6 models refit. 6-state ctrl also refit with k_off floor matched to HCM (10 s⁻¹).
+  - k_force floated as 9th free param with proper physiological floors — real improvement, ~190 AIC units in both conditions.
+
+  **CORRECTION — k_7_1 is NOT a HCM driver:**
+  The prior session (commit 27255de) reported k_7_1 jumping ~7× from ctrl→HCM (0.116→0.806) as a candidate HCM-driving parameter. This was an artifact of the unphysical k_off basin (k_off floor too loose allowed degenerate solution). With proper physiological constraints: ctrl k_7_1=0.228, HCM k_7_1=0.257 — essentially identical. **Do not report k_7_1 to Julia as an HCM driver.**
+
+  **New tool: `code/Fitting/plot_model_comparison.m`:**
+  Overlay plot — all 3 models on one axes per condition (ctrl and HCM). Saves to `fit_comparison_figures/fits_overlay_control.png` and `fits_overlay_HCM.png`. Legend shows error values. Light mode (white background).
+
+- [2026-06-25] Autonomous agent session: bound diagnostics, Ca timing confirmation, k_force exploration.
+  - **Bound changes (major AIC improvement)**: Widened 4 bounds simultaneously — k_off floor 50→10 s⁻¹, k_coop ceiling ~10→20, k_4_0 ceiling 100→316 s⁻¹, k_on ceiling 1e8→2e8. Result: ctrl AIC -3610→-4449, HCM AIC -3075→-4002 (huge improvement).
+  - **k_off floor diagnostic**: lowered further to 1 s⁻¹. Control found interior at **13.4 s⁻¹** (natural plateau, not an artifact). HCM settled near 10 s⁻¹. **Kept floor=1 s⁻¹ (min_value=0.0).**
+  - **k_coop cap diagnostic**: capping at ~10 costs only ~0 AIC for ctrl but **+265 AIC for HCM**. k_coop is still climbing in HCM (not plateauing). Campbell 2018 reports ~5.7 as plausible; HCM optimizer wants >20. **Flag for PI — do not raise ceiling further without discussion.** k_coop max restored to 1.3 (ceiling=20) for next round.
+  - **k_4_0 ceiling raise confirmed**: k_4_0 resolved at ~95 s⁻¹ (HCM) and ~8 s⁻¹ (ctrl) — not pinned at new ceiling 316. Old 100 s⁻¹ ceiling was arbitrary. **Keeper.**
+  - **k_on ceiling raise confirmed**: optimizer moved to *lower* value (4e7) once given room past old ceiling (8.5e7). Wider ceiling revealed a better basin. **Keeper.**
+  - **Ca timing confirmed NOT an issue**: the "~129ms lag" was a measurement artifact. Real Ca→force lag the optimizer sees (using evaluate_time_fit.m threshold logic) is only **26–36ms** — within physiological EC-coupling delay. Diagnostic shift test (protocol shifted 129 rows earlier) was **catastrophically worse** (ctrl AIC -4449→-1593). `protocol_1s.txt` is correct as-is. No protocol changes needed.
+  - **k_force float (novel idea, inconclusive)**: k_force is read from model JSON (no code change needed). Preliminary fit found AIC -5084 (ΔAIC -635 vs baseline) but via an **unphysical basin** (k_3≈1 s⁻¹, k_off≈3 s⁻¹, k_force=2e-3 Pa⁻¹ = 14× above Lewalle value). Force-feedback replaced Ca activation rather than supplementing it. **Not ready to float k_force without adding physiological floors on k_3 (≥5), k_4_0 (≥5), k_off (≥10 s⁻¹) first.**
+  - **Current optimization.json state** (6-state ctrl and HCM, both updated, uncommitted):
+    - k_off: min=0.0 (floor=1 s⁻¹), max=2.3 (ceiling=200 s⁻¹)
+    - k_coop: max=1.3 (ceiling=20) — still climbing in HCM, flag for PI
+    - k_4_0: max=2.5 (ceiling=316 s⁻¹) — resolved, keeper
+    - k_on: max=8.3 (ceiling=2e8) — resolved, keeper
+    - HCM p_values seeded from Test 1 best-fit to avoid bad local minimum (k_4_0=1 s⁻¹ basin)
+  - 6-state HCM refit in progress (PID 54342, launched 2026-06-26) with final recommended bounds — result pending.
+  - New diagnostic files created (not committed): `code/System/protocols/protocol_1s_shifted.txt`, `code/Fitting/twitch_6state_control/sim_input/optimization_kforce_test.json`, `code/Fitting/twitch_6state_control/demo_fit_kforce_diag.m`
+
+- [2026-07-07] Full sensitivity analysis of all 6 twitch models — addressed 5 PI items. New tools (UNTRACKED in `Code/Fitting/`): `sensitivity_all_params.m`, `k71_shape_analysis.m`, `passive_force_experiment.m`, writeup `sensitivity_report.md`. Metric = normalized local elasticity from ±10% step = (%Δforce)/(%Δparam) (the "rise over run" the PI asked for). Real `model_best.json` files NOT modified (passive experiment used scratch copies). Full writeup with all tables in `Code/Fitting/sensitivity_report.md`.
+  - **Item 1 (k_force):** peak elasticity +0.50 (3-state) → +0.16 ctrl / +0.25 HCM (6-state), ~3× weaker in multi-state schemes. Gain knob, NOT an HCM driver (best ~1.5e-4 both conditions, at Lewalle 1.48e-4).
+  - **Item 2 (k_7_1) — RECLASSIFIED:** peak elasticity ≈0 is a turning-point artifact, not unimportance. Real axis = relaxation (+0.22 6s-HCM, +0.42 4s-HCM). HCM fine sweep: net peak non-monotonic (hump max ~1.97× best); relaxation half-time 0.34→0.55 s then collapses past ~2.6× best. Cliff is PHYSICAL (positive-strain heads latch, r7→0), NOT the max_rate cap (0/200 bins capped at best fit; only 33–40/200 at 10×). **k_7_1 = falling-phase / relaxation control knob, NOT a peak or HCM force driver** (ctrl 0.228 vs HCM 0.257). Supersedes the earlier "flat passenger" label.
+  - **Item 3 (cross-scheme + local rate):** rank order stable across schemes (passive_hsl_slack > k_off ≈ k_on > k_3 ≈ cb_number_density ≈ k_1 > detachment terms > titin/vertical ≈ 0); magnitudes shrink 3-state → 6-state (k_1 1.14→0.57) — adding states buffers each parameter (identifiability/AIC tradeoff quantified).
+  - **Item 4 (cross-bridge terms):** cb_number_density peak elasticity +0.60 (4/6-state), NOT naive +1 — force-feedback pushes >1, series-compliance shortening pulls <1. k_cb (stiffness) only +0.14–0.26 because it also sits in the r7 detachment exponent → per-head force gain cancelled by faster strain-dependent detachment. Key insight: stiffness and detachment load-sensitivity entangled through k_cb. Consistency check: k_boltzmann ≡ temperature elasticity everywhere (only product kT enters).
+  - **Item 5 (linear vs exponential passive, "rubber band"):** at physiological params exponential does NOT change twitch qualitatively; linear ≈ exp(σ=100, L=25) net twitch. Only short length constant L=10 nm matters (diastolic 1.7→3.5 kPa, net active −17%). Recommendation: keep linear for twitch fits; revisit exponential only for elevated diastolic tension (diastolic dysfunction regime).
+
+- [2026-07-14] Length-shortening protocol investigation — diagnosed and fixed the "negative force" bug PI flagged, plus found/fixed an unrelated pipeline break.
+  - **Protocol audit**: checked every protocol file in `Code/System/protocols/` and `~/Downloads/`. Only `protocol_1s_strain.txt` has a real length trajectory (`dhsl` ranges -0.485 to +0.284 nm/step, 968 unique values). `protocol_1s_slow.txt` and `protocol_exp_con2.txt` both have flat/zero `dhsl` despite plausible-looking names — NOT length protocols. `protocol_1s_strain.txt` duration is **1.8 s** (not 1 s despite the filename) — matches PI's "longer than 1 second" comment. Copied into repo at `Code/System/protocols/protocol_1s_strain.txt` (uncommitted).
+  - **Root cause of negative force**: `Code/System/@half_sarcomere/return_passive_force.m` computed the passive (titin) spring symmetrically — resisting compression as hard as extension. Verified empirically: running the 6-state control best-fit model through `protocol_1s_strain.txt` gave force down to **-831 N/m²** (240/1800 rows negative) as hs_length shortened below `passive_hsl_slack` (1265 nm). Real titin only pulls in extension; it should contribute ~0 force below slack, not push back.
+  - **Fix implemented**: added two new passive-force modes to `return_passive_force.m`: `linear_asymmetric` and `exponential_asymmetric` — identical to existing formulas above slack, return 0 below slack. Original `linear`/`exponential` modes untouched (no existing fits affected by the code change alone). Verified fix eliminates all negative force on the strain protocol for both control and HCM.
+  - **Major discovery**: on the actual twitch-fitting protocol (`protocol_1s.txt`), hs_length is **below slack length for 100% of every row** in both control and HCM sims — the passive spring's wrong-sign behavior has been active in every twitch fit run so far, not just an edge case.
+  - **Separate, pre-existing pipeline bug found and fixed**: `Code/System/fit/evaluate_single_trial.m` was never carried over during the 2026-06-07 repo reorg — `fit_worker.m` called a nonexistent function. **This means no refit has been runnable on this branch since 2026-06-07**, so all "current" fit results in this log predating that fix could not have been re-verified since. Recovered last version from git history (`code/fit/evaluate_single_trial.m` @ commit b93ac60), adapted signature to match current `fit_worker.m` calling convention (`options_file_string` → `simulation_driver`'s `options_json_file_string`; added `y_attempt` output via `evaluate_time_fit`). Saved to `Code/System/fit/evaluate_single_trial.m` (untracked, needs to be staged with the rest of `Code/System/fit/` which is itself still uncommitted from the reorg).
+  - **Refit results testing the asymmetric fix** (scratch copies only — `twitch_6state_control_asym/` and `twitch_6state_HCM_asym/`, canonical `temp/best/model_best.json` in the real `twitch_6state_control/` and `twitch_6state_HCM/` dirs untouched):
+    | | old `linear` | new `linear_asymmetric` |
+    |---|---|---|
+    | Control error / AIC | 0.0052 / -5081 | **0.0041 / -5312** (clear win) |
+    | HCM error / AIC | 0.0059 / -5015 | 0.0147 / -4118 (still worse, after fixing a boundary-pinning issue) |
+  - **Control: genuine improvement.** HCM: initially got a much worse result (0.0289, AIC -3452) because `k_1` and `k_7_1` were pinned exactly at their optimization.json floor bounds (`k_1` floor=10 s⁻¹ inherited from old-model calibration, no longer valid once control's new best-fit `k_1` dropped to 4.66). Widened both floors (`k_1` min_value 0.999978→-1, `k_7_1` min_value -1→-2 in both ctrl/HCM `_asym` optimization.json files) and reran — HCM improved to 0.0147/-4118 but is still ~2.5× worse error than old linear mode.
+  - **Critical flag for PI, supersedes prior HCM-driver narrative**: with the corrected (asymmetric) passive force, HCM `k_1` (4.93) is barely different from control `k_1` (4.66) — ratio **~1.06×**, not the previously reported 5.2×. This calls into question whether `k_1` was ever the real HCM driver, or whether the old fits were using the passive-force bug as a compensating mechanism. **Do not report the 5.2× k_1 finding to Julia without PI review of this.** Also `k_7_1` keeps landing exactly on whatever floor is set (0.1, then 0.01) across all three HCM reruns — may be a genuine physical edge optimum (zero strain-dependence of detachment) or a sign of an unresolved fitting issue; needs multiple random restarts to disambiguate, not just further bound-widening.
+  - **State left at end of session**: `return_passive_force.m` change and `evaluate_single_trial.m` restoration are real code fixes worth committing regardless of the fit-quality question. The `_asym` scratch refits should NOT replace canonical `model_best.json` files yet — HCM result is unresolved. `protocol_1s_strain.txt` copied into repo but uncommitted.
+  - Next: bring the k_1-ratio-collapse finding to PI before any further HCM fitting; if PI wants to proceed, run multiple random-restart fits for HCM under `linear_asymmetric` (single fminsearch run is not reliable given the boundary-pinning history); decide whether to commit `Code/System/fit/` (including restored `evaluate_single_trial.m`), `return_passive_force.m`, and `protocol_1s_strain.txt`; consider whether 3/4-state models also need the asymmetric passive fix for a fair AIC comparison.
+
+- [2026-07-20] Processed PI dictated feedback (k_7_0123 shape, passive force below slack, slack length, negative force → head opening, L=25, sarcomere length range 800–1200 nm, sensitivity→measurable). Comprehended items, then implemented everything except Jeremiah validation-dataset (external, not in repo). Changes + full refit + k_1 rerun + multistart. **All UNCOMMITTED. See memory [[refit-rebaseline-20260720]] for full detail.**
+  - **4 code/config changes applied:**
+    1. **hs_force floored at 0** in r1 force-feedback of `update_3state/4state/6state_*.m`: `k_1*(1+k_force*max([0 hs_force]))` — matches `update_beard_atp_revised.m`. (Answers PI "does negative force trigger head opening" — now it only throttles r1, can't drive it negative.)
+    2. **Re-baselined length** `hs_length` & `passive_hsl_slack` 1265→**1000 nm** in all 6 `model_template.json` (PI wants operating ~1000, sweep [800,1200]). f_overlap valid (~0.67–1.0) across range. User chose "re-baseline to 1000 + sweep literally" over keeping 1265.
+    3. **`passive_force_mode` → `exponential_asymmetric`** + `passive_sigma=100`, `passive_L=25` in all 6 templates. Titin engages only in extension (pf=0 below slack). Real fix of the negative-passive-force sign bug. (Answers PI "linear gives restoring force below slack, should approach zero"; L=25 per PI + sensitivity_report.)
+    4. **`k_7_2`=2 (steepness) / `k_7_3`=9 (threshold nm) snapback** added to 4-/6-state templates + free optimizer params. r7 snapback logic already present via `isfield(k_7_2)` guard. (Answers PI "k_7 parabola down then sudden spike/snapback".) **This alone fixed 4-state HCM: e 0.368→0.030.**
+  - **Full refit, all 6 models (new baseline), 6-state wins both:**
+    | Model | ctrl e / AIC | HCM e / AIC |
+    |---|---|---|
+    | 3-state | 0.0270 / -3488 | 0.0437 / -3055 |
+    | 4-state | 0.0088 / -4567 | 0.0304 / -3404 |
+    | **6-state** | **0.0052 / -5082** | **0.0055 / -5073** |
+  - **k_1 ceiling rerun — 9.5× was a PINNING ARTIFACT:** first 6s-HCM fit had k_1 pinned at ceiling (53.4, ceiling=56=10×ctrl), e=0.0072. Widened ceiling→100 s⁻¹, reran: **better** basin (e=0.0055, AIC +256) with **k_1=16.95 interior (~3× ctrl), not 9.5×.** In the better basin the increase redistributes: k_1~3×, k_7_1 0.10→0.62 (~6×), k_5_0 240→1143 (~5×).
+  - **Multi-start (6 restarts, killed at r4; r1-3 done) — DECISIVE: 6-state HCM is NOT identifiable.** k_1 ranges 3.1→17 across starts; k_3 22→199; k_4_0 5→121; k_off 10→85. r3 error 0.0133 WORSE than 0.0055 best → restarts land in inferior minima. **Cannot report any single crossbridge param as "the HCM driver" from this setup — over-parameterized/poorly identifiable.** Strong concrete case for multi-start/Great Lakes + reducing free params / adding constraints.
+  - **Great Lakes discussion:** won't speed a single serial fminsearch fit; real win = many concurrent runs (bypasses local 2-MATLAB-license wall) for multi-start global opt + parameter sweeps. Worth it once workflow scales to hundreds of runs (multi-start HCM array job is the natural first project). Check if PI/Julia already have a GL allocation.
+  - **Memory updated:** new `refit_rebaseline_20260720.md`; old `project_pipeline_state.md` k_1=5.2× claim marked SUPERSEDED; MEMORY.md index updated.
+  - Next session: (1) harden `multistart_6state_HCM.m` to write CSV incrementally (kill-safe) + run 12–20 restarts ranked by error; (2) task #7 length sweep 800–1200 nm (deferred, not started); (3) decide commits (all reorg + fixes still uncommitted since 27255de/6-07 reorg); (4) bring identifiability finding to PI — it changes the whole "find the HCM-driving parameter" deliverable to Julia.
+
 ## Key Technical Rules (always apply these)
 
 ### MATLAB
@@ -369,43 +451,63 @@ Paper files: `~/Downloads/PIIS0006349524003527.pdf` (Lewalle), `~/Downloads/2026
 
 ---
 
-## Current Fit State (as of 2026-06-24)
+## Current Fit State (as of 2026-06-27/28)
 
-Floating k_7_1 (strain sensitivity of detachment) and releasing k_4_0 (per PI 6/22 request) resolved the k_1-ceiling bottleneck. 4-state HCM k_7_0 template bug fixed (438→104) and refit. **All final fits complete — 6-state now wins AIC decisively in both conditions.**
+All 6 models refit with matched bounds. 6-state + k_force wins AIC in both conditions. All results are in working tree (uncommitted since 27255de on 2026-06-24).
 
-| Model | Error | AIC | ΔAIC (within condition) | Notes |
-|---|---|---|---|---|
-| **Control** | | | | |
-| 6-state ctrl | 0.0237 | -3610.4 | 0 (winner) | k_1 off ceiling (6.76 s⁻¹) |
-| 4-state ctrl | 0.0511 | -2869.5 | +741.0 | |
-| 3-state ctrl | 0.0611 | -2699.2 | +911.2 | |
-| **HCM** | | | | |
-| 6-state HCM | 0.0425 | -3075.4 | 0 (winner) | k_1 off ceiling (11.6 s⁻¹) |
-| 3-state HCM | 0.0553 | -2825.0 | +250.4 | |
-| 4-state HCM | 0.1176 | -2083.2 | +992.2 | improved from e=0.154 after k_7_0 template fix |
+**Full AIC table (all fresh fits, 2026-06-27, matched bounds: k_off floor=10, k_on floor≥1e7, k_coop ceiling=20):**
+
+| Model | n_params | Error | AIC | ΔAIC ctrl | ΔAIC HCM |
+|---|---|---|---|---|---|
+| **Control** | | | | | |
+| 6-state + k_force | 9 | 0.00426 | -5272 | 0 (winner) | — |
+| 6-state | 8 | 0.00519 | -5081 | +191 | — |
+| 4-state | 6 | 0.00933 | -4518 | +754 | — |
+| 3-state | 5 | 0.01962 | -3799 | +1473 | — |
+| **HCM** | | | | | |
+| 6-state + k_force | 9 | 0.00481 | -5208 | — | 0 (winner) |
+| 6-state | 8 | 0.00587 | -5015 | — | +193 |
+| 4-state | 6 | 0.01133 | -4374 | — | +834 |
+| 3-state | 5 | 0.04151 | -3105 | — | +2103 |
 
 **6-state free params (8): k_1, k_3, k_on, k_off, k_5_0, k_coop, k_7_1, k_4_0**
+**6-state + k_force (9): above + k_force**
 
-Key fitted values (6-state):
-| Param | ctrl | HCM | Notes |
+**Best-fit parameter table (6-state 8-param, verified from model_best.json 2026-06-27):**
+| Param | ctrl | HCM | ratio | Notes |
+|---|---|---|---|---|
+| k_1 (s⁻¹) | 5.05 | 26.37 | **5.2×↑** | primary HCM driver |
+| k_3 (s⁻¹) | 35.3 | 23.89 | 0.68×↓ | ⚠️ unstable — see flags |
+| k_on (M⁻¹s⁻¹) | 2.63e7 | 2.96e7 | ~1× | interior, not a driver |
+| k_off (s⁻¹) | 10.0 ⚠️ | 11.22 | ~1× | ctrl at floor |
+| k_4_0 (s⁻¹) | 39.47 | 6.23 | — | different basins |
+| k_5_0 (s⁻¹) | — | 848 | — | |
+| k_7_1 | 0.228 | 0.257 | ~1× | NOT a driver (prior 7× was artifact) |
+| k_coop | 19.95 ⚠️ | 19.94 ⚠️ | ~1× | at ceiling both — shape param, flag for PI |
+
+**k_force diagnostic (6-state + k_force, 9-param):**
+| | ctrl | HCM | Notes |
 |---|---|---|---|
-| k_1 (s⁻¹) | 6.76 | 11.6 | off ceiling now; HCM > ctrl as expected (k_-SRX driver) |
-| k_3 (s⁻¹) | 169 | 117 | |
-| k_on (M⁻¹s⁻¹) | 1.24e7 | 8.45e7 | HCM near upper bound — flag |
-| k_off (s⁻¹) | 50.1 | 50.1 | both at floor (min_value=1.7→50 s⁻¹) — flag |
-| k_4_0 (s⁻¹) | 71.4 | 100 ⚠️ | HCM at ceiling — newly released param, may need wider bound |
-| k_5_0 (s⁻¹) | 633 | 812 | both elevated, no hard ceiling hit |
-| k_7_1 | 0.116 | 0.806 ⚠️ | ~7× higher in HCM — large load-sensitivity increase; newly floated param, drives much of the fit improvement |
-| k_coop | 0.330 | 9.999 ⚠️ | HCM at ceiling (cap=10) — flag, expect ~5 per Campbell 2018 |
+| k_force (Pa⁻¹) | 2.46e-4 | 1.77e-4 | both near Lewalle 1.48e-4; ctrl > HCM |
+| k_1 (s⁻¹) | 5.71 | 59.85 | 10.5× ratio with k_force |
+| k_7_1 | 0.165 | 0.100 ⚠️ | k_7_1 anti-correlates with k_force in HCM |
+
+**Current optimization.json bounds (all 6 models updated, uncommitted):**
+| Param | 3/4-state ctrl/HCM | 6-state ctrl | 6-state HCM |
+|---|---|---|---|
+| k_off | 10–200 s⁻¹ | 10–200 s⁻¹ | 10–200 s⁻¹ |
+| k_on | 1e7–2e8 | 1e7–2e8 | 2e7–2e8 ← stricter floor |
+| k_coop | 0.1–20 | 0.1–20 | 0.138–20 |
+| k_4_0 | fixed | 1–316 s⁻¹ | 1–316 s⁻¹ |
 
 **Open issues / flags for PI:**
-1. k_coop pinned at ceiling (10) for 6-state HCM — consider raising cap or check if this is compensating for something structural
-2. k_4_0 at ceiling (100 s⁻¹) for 6-state HCM — newly released param, may need wider upper bound
-3. k_7_1 jumps ~7× (0.116→0.806) ctrl→HCM — biologically this says HCM heads are far more load-sensitive in detachment; worth flagging as a candidate "force-increasing parameter" for Julia, pending PI sanity check
-4. k_off at floor (50 s⁻¹) in both 6-state conditions — same value both conditions, so not HCM-discriminating
-5. k_on near upper bound in 6-state HCM (8.45e7, bound max 1e8) — check headroom
-6. 4-state HCM still loses badly (ΔAIC +992) — architecture genuinely cannot capture HCM phenotype even with bug fixes
-7. Candidate force/HCM-driving parameters to report to Julia: k_1 (SRX exit), k_7_1 (load-sensitivity of detachment) — both show clear, consistent ctrl→HCM shifts in the same direction across fits
+1. **k_coop at ceiling (20) in both conditions** — sweep shows k_coop has *negative* effect on peak force (it's being optimized for waveform shape, not amplitude). Fix at Campbell's 5.7 costs +166 AIC (ctrl) / +265 AIC (HCM). PI must decide.
+2. **k_3 instability** — ctrl k_3 varies 4.82→35.3 s⁻¹ depending on k_off floor. k_3 and k_off are correlated. Do NOT report k_3 as HCM driver until resolved.
+3. **k_force finding** — HCM has weaker Frank-Starling feedback (1.77e-4) than ctrl (2.46e-4). Counterintuitive — flag for PI before reporting to Julia.
+4. **k_7_1 + k_force anti-correlation** — can't float both simultaneously without wider bounds. PI should choose one.
+5. **3-state HCM k_on at floor** (1e7) — may be in unphysical basin; doesn't affect 6-state conclusions but ΔAIC comparison vs 3-state may be slightly overstated.
+6. **k_1 ratio**: 5.2× (8-param) or 10.5× (with k_force). Vander Roest 2021 P710R: 12.9×. H251N may differ.
+7. **For Julia**: safest defensible HCM-driving parameter is k_1 (5.2–10.5×). k_7_1 is NOT a driver (prior finding was artifact). k_force direction (HCM weaker) needs PI confirmation first.
 
 ---
 
