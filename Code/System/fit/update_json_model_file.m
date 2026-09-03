@@ -3,7 +3,16 @@ function all_models = update_json_model_file(opt_structure, job_counter, ...
 % Function creates a new model file based on opt structure and p vector
 
 % Pull of the filnames we want
-original_json_model_file_string = opt_structure.model_template_file_string;
+% A job may override the global template with its own
+% model_template_file_string (used for joint fits where each job/
+% condition needs different fixed baseline parameters that are not
+% part of the shared optimizer parameter set).
+if isfield(opt_structure.job{job_counter}, 'model_template_file_string')
+    original_json_model_file_string = ...
+        opt_structure.job{job_counter}.model_template_file_string;
+else
+    original_json_model_file_string = opt_structure.model_template_file_string;
+end
 new_json_model_file_string = ...
     opt_structure.job{job_counter}.model_file_string;
 
@@ -17,18 +26,40 @@ par_structure = opt_structure.parameter;
 model_fields = fieldnamesr(model_struct);
 
 % Loop through the parameters
+%
+% Joint-fit support (backward compatible): a parameter entry may carry
+% an optional "job" field restricting it to a single job_counter (used
+% for parameters that are allowed to differ between conditions, e.g.
+% k_1_ctrl / k_1_hcm), and an optional "target_name" field giving the
+% actual model field name to write (defaults to "name" if absent).
+% Parameters with no "job" field are written identically into every
+% job's model (the normal shared-parameter / single-job behavior).
 for i = 1 : numel(par_structure)
-      
+
+    this_par = par_structure{i};
+
+    % Skip parameters that are restricted to a different job
+    if isfield(this_par, 'job') && this_par.job ~= job_counter
+        continue;
+    end
+
     % Set the parameter value
     par_value = return_parameter_value( ...
-        par_structure{i}, p_vector(i));
+        this_par, p_vector(i));
+
+    % Resolve the model field name (target_name overrides name)
+    if isfield(this_par, 'target_name')
+        write_name = this_par.target_name;
+    else
+        write_name = this_par.name;
+    end
 
     % Create the par_string
-    par_string = sprintf('parameters.%s', par_structure{i}.name);
-   
+    par_string = sprintf('parameters.%s', write_name);
+
     % Update model struct
     update_model_struct(par_string, par_value);
-    
+
 end
 
 % Update hsl if required

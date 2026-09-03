@@ -17,3 +17,11 @@ Gemfile.lock
 **/temp/*.flag
 **/temp/*.pid
 **/temp/best_*/
+
+# Optimizer run logs (large, regenerable)
+Code/Fitting/**/*.log
+**/temp/**/*.log
+**/temp/**/*.flag
+
+# Office lock files
+~$*

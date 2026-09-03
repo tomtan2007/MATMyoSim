@@ -1,0 +1,8 @@
+{
+	"MyoSim_options":
+	{
+        "drawing_skip": 0,
+		"figure_simulation_output": 0,
+		"figure_rates": 0
+	}
+}

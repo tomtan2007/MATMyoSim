@@ -1,0 +1,134 @@
+{
+    "MyoSim_optimization": {
+        "model_template_file_string": "sim_input/model_template_ctrl.json",
+        "fit_mode": "fit_in_time_domain",
+        "fit_variable": "muscle_force",
+        "best_model_folder": "temp/best",
+        "best_opt_file_string": "temp/best/best_6state_joint.json",
+        "figure_current_fit": 0,
+        "figure_optimization_progress": 0,
+        "job": [
+            {
+                "model_template_file_string": "sim_input/model_template_ctrl.json",
+                "model_file_string": "temp/model_worker_ctrl.json",
+                "protocol_file_string": "../../System/protocols/protocol_1s.txt",
+                "options_file_string": "sim_input/sim_options.json",
+                "results_file_string": "temp/twitch_ctrl.myo",
+                "target_file_string": "../../System/target_data/Con_target.txt"
+            },
+            {
+                "model_template_file_string": "sim_input/model_template_hcm.json",
+                "model_file_string": "temp/model_worker_hcm.json",
+                "protocol_file_string": "../../System/protocols/protocol_1s.txt",
+                "options_file_string": "sim_input/sim_options.json",
+                "results_file_string": "temp/twitch_hcm.myo",
+                "target_file_string": "../../System/target_data/H251N_target.txt"
+            }
+        ],
+        "parameter": [
+            {
+                "name": "k_3",
+                "min_value": 0,
+                "max_value": 2.3,
+                "p_value": 0.5642,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_on",
+                "min_value": 7,
+                "max_value": 8.3,
+                "p_value": 0.4546,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_off",
+                "min_value": 1.0,
+                "max_value": 2.3,
+                "p_value": 0.0351,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_coop",
+                "min_value": -1,
+                "max_value": 1.3,
+                "p_value": 0.98,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_7_1",
+                "min_value": -1,
+                "max_value": 1,
+                "p_value": 0.1976,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_7_2",
+                "min_value": -0.523,
+                "max_value": 1,
+                "p_value": 0.7392,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_7_3",
+                "min_value": 0.477,
+                "max_value": 1,
+                "p_value": 0.6173,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_1_ctrl",
+                "target_name": "k_1",
+                "job": 1,
+                "min_value": -1,
+                "max_value": 2,
+                "p_value": 0.5829,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_1_hcm",
+                "target_name": "k_1",
+                "job": 2,
+                "min_value": -0.251366,
+                "max_value": 2.0,
+                "p_value": 0.6576,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_5_0_ctrl",
+                "target_name": "k_5_0",
+                "job": 1,
+                "min_value": 1.7,
+                "max_value": 4,
+                "p_value": 0.2962,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_5_0_hcm",
+                "target_name": "k_5_0",
+                "job": 2,
+                "min_value": 1.7,
+                "max_value": 3.381163,
+                "p_value": 0.8078,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_4_0_ctrl",
+                "target_name": "k_4_0",
+                "job": 1,
+                "min_value": 0,
+                "max_value": 2.5,
+                "p_value": 0.6861,
+                "p_mode": "log"
+            },
+            {
+                "name": "k_4_0_hcm",
+                "target_name": "k_4_0",
+                "job": 2,
+                "min_value": 0.715236,
+                "max_value": 2.5,
+                "p_value": 0.1604,
+                "p_mode": "log"
+            }
+        ]
+    }
+}

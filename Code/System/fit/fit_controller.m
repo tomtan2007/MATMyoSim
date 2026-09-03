@@ -35,18 +35,35 @@ fh = @(x)run_trial(x, opt_structure);
 nvars = numel(p_vector);
 lb = zeros(1, nvars);
 ub = ones(1, nvars);
-fm_options = optimset('Display', 'iter', 'MaxFunEvals', 5000, 'TolFun', 1e-6);
+% Optional override (opt_structure.max_fun_evals) so exploratory runs
+% (joint fits, profile-likelihood scans) can cap runtime without
+% touching the default used by all existing single-condition demos.
+if isfield(opt_structure, 'max_fun_evals')
+    max_fun_evals = opt_structure.max_fun_evals;
+else
+    max_fun_evals = 5000;
+end
+fm_options = optimset('Display', 'iter', 'MaxFunEvals', max_fun_evals, 'TolFun', 1e-6);
 fminsearch(fh, p_vector, fm_options);
 
 % Save results JSON and sentinel so monitoring agent can read outcome
 results_dir = fileparts(opt_structure.best_opt_file_string);
 k = numel(p_vector);
+% For multi-job (joint) fits, sum active-window point counts across all
+% jobs. NOTE: when there is more than one job, best_e is a MEAN of
+% per-job normalized MSEs (see fit_worker.m), not a single SSE/n_total,
+% so n_active*log(best_e)+2k is only an approximation of a true joint
+% AIC here (exact when all jobs have equal n_active). Treat joint-fit
+% AIC values as comparative/approximate, not literal.
 try
-    target_raw = dlmread(opt_structure.job{1}.target_file_string);
-    tmin = min(target_raw); tmax = max(target_raw);
-    fa = find(target_raw > tmin + 0.05*(tmax-tmin), 1, 'first');
-    if isempty(fa), fa = 1; end
-    n_active = numel(target_raw) - fa + 1;
+    n_active = 0;
+    for jbi = 1 : numel(opt_structure.job)
+        target_raw = dlmread(opt_structure.job{jbi}.target_file_string);
+        tmin = min(target_raw); tmax = max(target_raw);
+        fa = find(target_raw > tmin + 0.05*(tmax-tmin), 1, 'first');
+        if isempty(fa), fa = 1; end
+        n_active = n_active + (numel(target_raw) - fa + 1);
+    end
 catch
     n_active = NaN;
 end
@@ -89,8 +106,16 @@ fprintf('=== Fit complete: error=%.6f  AIC=%.1f ===\n', best_e, fit_results.aic)
             y_best = y_attempt;
             best_p = p_vector;
             if (isfield(opt_structure, 'model_working_file_string'))
-                copyfile(opt_structure.model_working_file_string, ...
-                    opt_structure.best_model_file_string);
+                if iscell(opt_structure.model_working_file_string)
+                    % Joint fit: one working/best model file per job
+                    for jbi = 1 : numel(opt_structure.model_working_file_string)
+                        copyfile(opt_structure.model_working_file_string{jbi}, ...
+                            opt_structure.best_model_file_string{jbi});
+                    end
+                else
+                    copyfile(opt_structure.model_working_file_string, ...
+                        opt_structure.best_model_file_string);
+                end
             end
             
             % Update best_opt_file

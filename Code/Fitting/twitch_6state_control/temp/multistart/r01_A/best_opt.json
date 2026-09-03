@@ -21,70 +21,70 @@
 				"name": "k_1",
 				"min_value": -1,
 				"max_value": 2,
-				"p_value": 0.9872456273,
+				"p_value": 0.9682345956,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_3",
 				"min_value": 0,
 				"max_value": 2.3,
-				"p_value": 0.4879501705,
+				"p_value": 0.640034328,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_on",
 				"min_value": 7,
 				"max_value": 8.3,
-				"p_value": 0.06520533527,
+				"p_value": 0.1447738651,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_off",
 				"min_value": 1,
 				"max_value": 2.3,
-				"p_value": 0.08860516189,
+				"p_value": 0.006077570027,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_5_0",
 				"min_value": 1.7,
 				"max_value": 4,
-				"p_value": 0.7278635283,
+				"p_value": 0.5677728009,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_coop",
 				"min_value": -1,
 				"max_value": 1.3,
-				"p_value": 0.002201816356,
+				"p_value": -2.219162028e-06,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_7_1",
 				"min_value": -1,
 				"max_value": 1,
-				"p_value": 0.344606201,
+				"p_value": -9.192914414e-07,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_4_0",
 				"min_value": 0,
 				"max_value": 2.5,
-				"p_value": 0.007461542853,
+				"p_value": 0.7460612141,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_7_2",
 				"min_value": -0.523,
 				"max_value": 1,
-				"p_value": 0.2797955725,
+				"p_value": 0.3869524616,
 				"p_mode": "log"
 			},
 			{
 				"name": "k_7_3",
 				"min_value": 0.477,
 				"max_value": 1,
-				"p_value": 0.8644553015,
+				"p_value": 0.6346054105,
 				"p_mode": "log"
 			}
 		],

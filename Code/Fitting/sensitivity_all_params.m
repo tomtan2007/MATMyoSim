@@ -10,7 +10,11 @@ function sensitivity_all_params(demo_dir)
 %                 ("rise over run" magnitude, comparable across all params)
 %   fold        = max/min output over a wide 0.1x - 10x sweep (saturation view)
 %
-%   outputs measured: peak force  and  relaxation half-time (peak -> 50% decay)
+%   outputs measured: peak force, relaxation half-time (peak -> 50% decay),
+%   % half-sarcomere shortening, and SRX fraction (M1) at peak force -- the
+%   last two turn the elasticity table into measurable predictions (SRX%
+%   checkable against Cy3-ATP-type assays, shortening% against sarcomere
+%   length imaging).
 %
 % Parameters fixed at exactly 0 (e.g. off transitions k_8, k_10) cannot be
 % swept multiplicatively, so they get an additive ladder and elasticity = NaN
@@ -43,13 +47,15 @@ options_file  = job.options_file_string;
 if ~isfolder(fullfile('temp', 'sweeps')), mkdir(fullfile('temp', 'sweeps')); end
 tmp_model = fullfile('temp', 'sensitivity_model.json');
 
-P     = model_best.MyoSim_model.hs_props.parameters;
-names = fieldnames(P);
+P        = model_best.MyoSim_model.hs_props.parameters;
+names    = fieldnames(P);
+ca_onset = 352;   % protocol_1s.txt Ca onset row, project convention (see parameter_sweep_6state_control.m)
 
 % Baseline (unperturbed) run
 savejson('', model_best, tmp_model);
-base = run_one(tmp_model, protocol_file, options_file);
-fprintf('Baseline: peak=%.1f N/m^2  relax_half=%.4g s\n\n', base.peak, base.t_half);
+base = run_one(tmp_model, protocol_file, options_file, ca_onset);
+fprintf('Baseline: peak=%.1f N/m^2  relax_half=%.4g s  shortening=%.2f%%  SRX_at_peak=%.3f\n\n', ...
+    base.peak, base.t_half, base.shorten, base.srx);
 
 mult_lo = 0.1; mult_hi = 10;          % wide fold-range sweep
 loc_lo  = 0.9; loc_hi  = 1.1;         % local +/-10% for elasticity
@@ -57,7 +63,8 @@ add_ladder = [0 0.5 1 5 50];          % for params fixed at 0
 
 R = struct('name', {}, 'best', {}, 'mode', {}, ...
            'peak_elast', {}, 'peak_fold', {}, 'peak_dir', {}, ...
-           'relax_elast', {}, 'relax_fold', {});
+           'relax_elast', {}, 'relax_fold', {}, ...
+           'shorten_elast', {}, 'srx_elast', {});
 
 for i = 1:numel(names)
     nm = names{i};
@@ -78,26 +85,36 @@ for i = 1:numel(names)
         i0        = 1;                 % baseline value (0)
     end
 
-    peaks  = nan(1, numel(test_vals));
-    relaxs = nan(1, numel(test_vals));
+    peaks    = nan(1, numel(test_vals));
+    relaxs   = nan(1, numel(test_vals));
+    shortens = nan(1, numel(test_vals));
+    srxs     = nan(1, numel(test_vals));
     for s = 1:numel(test_vals)
         model = model_best;
         model.MyoSim_model.hs_props.parameters.(nm) = test_vals(s);
         savejson('', model, tmp_model);
-        out       = run_one(tmp_model, protocol_file, options_file);
-        peaks(s)  = out.peak;
-        relaxs(s) = out.t_half;
+        out         = run_one(tmp_model, protocol_file, options_file, ca_onset);
+        peaks(s)    = out.peak;
+        relaxs(s)   = out.t_half;
+        shortens(s) = out.shorten;
+        srxs(s)     = out.srx;
     end
 
     % Elasticity from the local +/-10% points (mult only)
     if strcmp(mode, 'mult')
-        F0          = peaks(i0);
-        peak_elast  = (peaks(4) - peaks(2)) / (0.2 * F0);
-        r0          = relaxs(i0);
-        relax_elast = (relaxs(4) - relaxs(2)) / (0.2 * r0);
+        F0            = peaks(i0);
+        peak_elast    = (peaks(4) - peaks(2)) / (0.2 * F0);
+        r0            = relaxs(i0);
+        relax_elast   = (relaxs(4) - relaxs(2)) / (0.2 * r0);
+        sh0           = shortens(i0);
+        shorten_elast = (shortens(4) - shortens(2)) / (0.2 * sh0);
+        srx0          = srxs(i0);
+        srx_elast     = (srxs(4) - srxs(2)) / (0.2 * srx0);
     else
-        peak_elast  = NaN;
-        relax_elast = NaN;
+        peak_elast    = NaN;
+        relax_elast   = NaN;
+        shorten_elast = NaN;
+        srx_elast     = NaN;
     end
 
     R(end+1) = struct( ...
@@ -106,7 +123,9 @@ for i = 1:numel(names)
         'peak_fold',   safe_fold(peaks), ...
         'peak_dir',    dir_str(peaks), ...
         'relax_elast', relax_elast, ...
-        'relax_fold',  safe_fold(relaxs)); %#ok<AGROW>
+        'relax_fold',  safe_fold(relaxs), ...
+        'shorten_elast', shorten_elast, ...
+        'srx_elast',     srx_elast); %#ok<AGROW>
 end
 
 % Rank by |peak elasticity| (NaN / additive params sort to the bottom)
@@ -146,16 +165,19 @@ fprintf('Saved %s\n', png_path);
 end
 
 % ---------------------------------------------------------------------------
-function m = run_one(model_file, protocol_file, options_file)
-% Run one simulation; return peak force and relaxation half-time.
+function m = run_one(model_file, protocol_file, options_file, ca_onset)
+% Run one simulation; return peak force, relaxation half-time, %
+% half-sarcomere shortening, and SRX fraction (M1) at peak force.
 % Returns NaNs if the parameter value makes the simulation fail.
 try
     s = simulation_driver( ...
         'model_json_file_string',          model_file, ...
         'simulation_protocol_file_string', protocol_file, ...
         'options_json_file_string',        options_file);
-    f = s.muscle_force(:);
-    t = s.time_s(:);
+    f  = s.muscle_force(:);
+    t  = s.time_s(:);
+    hs = s.hs_length(:);
+    m1 = s.M1(:, 1);
     n_pre    = min(300, numel(f));              % pre-Ca-onset baseline
     baseline = mean(f(1:n_pre));
     [pk, pidx] = max(f);
@@ -166,9 +188,12 @@ try
     else
         t_half = t(pidx + ridx - 1) - t(pidx);
     end
-    m.peak = pk; m.t_half = t_half;
+    m.peak    = pk;
+    m.t_half  = t_half;
+    m.shorten = 100 * (hs(1) - min(hs)) / hs(1);
+    m.srx     = m1(pidx);
 catch
-    m.peak = NaN; m.t_half = NaN;
+    m.peak = NaN; m.t_half = NaN; m.shorten = NaN; m.srx = NaN;
 end
 end
 

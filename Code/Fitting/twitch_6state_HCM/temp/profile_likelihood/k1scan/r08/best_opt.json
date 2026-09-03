@@ -1,0 +1,81 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "temp\/profile_likelihood\/k1scan\/template_08.json",
+		"fit_mode": "fit_in_time_domain",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "temp\/profile_likelihood\/k1scan\/r08",
+		"best_opt_file_string": "temp\/profile_likelihood\/k1scan\/r08\/best_opt.json",
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"job": [
+			{
+				"model_file_string": "temp\/profile_likelihood\/k1scan\/worker_08.json",
+				"protocol_file_string": "..\/..\/System\/protocols\/protocol_1s.txt",
+				"options_file_string": "sim_input\/sim_options.json",
+				"results_file_string": "temp\/twitch_reduced.myo",
+				"target_file_string": "..\/..\/System\/target_data\/H251N_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_3",
+				"min_value": 0.400394,
+				"max_value": 2.3,
+				"p_value": 0.9999637132,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_on",
+				"min_value": 7,
+				"max_value": 7.7,
+				"p_value": 2.175953802e-06,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_5_0",
+				"min_value": 1.7,
+				"max_value": 3.381163,
+				"p_value": 0.7888522496,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_coop",
+				"min_value": 0.3,
+				"max_value": 1.176,
+				"p_value": 0.03225136244,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_1",
+				"min_value": -1,
+				"max_value": 3e-06,
+				"p_value": 0.3669484478,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_4_0",
+				"min_value": 0.715236,
+				"max_value": 2.5,
+				"p_value": 0.8043102585,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_2",
+				"min_value": -0.071265,
+				"max_value": 1,
+				"p_value": 0.3873445565,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_3",
+				"min_value": 0.477,
+				"max_value": 1,
+				"p_value": 0.5963319617,
+				"p_mode": "log"
+			}
+		],
+		"model_working_file_string": "temp\/profile_likelihood\/k1scan\/worker_08.json",
+		"best_model_file_string": "temp\/profile_likelihood\/k1scan\/r08\/model_best.json",
+		"max_fun_evals": 1200
+	}
+}

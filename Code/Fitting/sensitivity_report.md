@@ -286,3 +286,132 @@ plausible secondary driver. k_7_1 is explicitly re-classified from "passenger" t
   `k71_waveforms.png`, `k71_r7_profile.png`
 - Passive experiment: `twitch_6state_control/temp/scratch/passive_experiment.csv`
 - Tools: `Code/Fitting/sensitivity_all_params.m`, `k71_shape_analysis.m`, `passive_force_experiment.m`
+
+---
+
+## 2026-07-30 update — 800-1200 nm length sweep + measurable-output extension
+
+Addresses two deferred items from the 2026-07-20 PI feedback session: (1) the
+800-1200 nm operating-length sweep (never run — the original sweep above only
+covered `passive_hsl_slack`, a structurally separate field from `hs_length`),
+and (2) turning sensitivity numbers into checkable predictions by adding %
+sarcomere shortening and SRX/DRX fraction alongside peak force and relaxation
+half-time. Both re-run on the CURRENT 6-state control/HCM `model_best.json`
+(2026-07-20 rebaseline: 1000 nm operating/slack length, exponential-asymmetric
+passive force, floored force-feedback, k_7_2/k_7_3 snapback) — no refit
+performed, `model_best.json` untouched. New tool: `Code/Fitting/length_sweep_6state.m`.
+Sensitivity tool extended in place (`Code/Fitting/sensitivity_all_params.m`)
+with two new columns, `shorten_elast` and `srx_elast`; old columns unchanged.
+
+### Length-tension sweep (hs_length 800→1200 nm, passive_hsl_slack fixed at 1000 nm)
+
+| hs_length (nm) | ctrl peak (N/m²) | ctrl shorten% | ctrl relax½ (s) | ctrl SRX base→peak | HCM peak (N/m²) | HCM shorten% | HCM relax½ (s) | HCM SRX base→peak |
+|---|---|---|---|---|---|---|---|---|
+| 800  | 4302  | 5.38  | 0.135 | 0.808→0.663 | 9385  | 11.73 | 0.151 | 0.812→0.677 |
+| 900  | 4837  | 5.37  | 0.150 | 0.804→0.650 | 10834 | 12.04 | 0.197 | 0.806→0.657 |
+| **1000 (baseline)** | **5324** | **5.32** | **0.168** | **0.800→0.638** | **12179** | **12.18** | **0.371** | **0.801→0.639** |
+| 1100 | 6975  | 4.45  | 0.166 | 0.775→0.607 | 14048 | 11.01 | **NaN** | 0.776→0.616 |
+| 1200 | 12385 | 2.00  | 0.169 | 0.696→0.532 | 18536 | 7.60  | **NaN** | 0.699→0.563 |
+
+(full 9-point CSVs: `twitch_6state_{control,HCM}/temp/sweeps/length_sweep.csv`)
+
+**Findings:**
+1. **Force rises monotonically across the entire 800-1200 nm window in both
+   conditions — no descending limb, no plateau.** The current 1000 nm
+   operating point sits on the rising limb, not at a force maximum;
+   f_overlap is flat at 1.0 from 1040-1200 nm (per architecture check below),
+   so the continued force rise past 1040 nm comes from filament-overlap
+   engaging fully plus more series-compliance/passive recruitment, not from
+   overlap geometry. **Answers the PI's "is 1000 nm the right baseline"
+   question directionally: if peak systolic force were the sole criterion,
+   a longer baseline (closer to 1100-1200 nm) would produce more force** —
+   but shortening% and relaxation behavior (below) argue against simply
+   maximizing length.
+2. **% shortening is non-monotonic — peaks near baseline (950-1000 nm), falls
+   off in both directions,** most sharply at long length (ctrl 5.3%→2.0%,
+   HCM 12.2%→7.6% from 1000→1200 nm). A cell operating at 1200 nm would
+   generate more force but shorten proportionally less — a real, testable
+   trade-off if comparing to sarcomere-length imaging data.
+3. **HCM relaxation fails above ~1050 nm: relax half-time is NaN (does not
+   reach 50% decay within the 1.486 s twitch record) at 1100-1200 nm,** vs.
+   control which stays flat (0.135-0.169 s) across the whole range. Control
+   never shows this failure in the tested window. This is a length-dependent
+   diastolic-relaxation signature specific to the HCM parameter set — a
+   candidate mechanistic link to the "chaotic/irregular oscillations" and
+   "wasted work" phenotype from Julia's slide, and a concrete, checkable
+   prediction: HCM cells at longer preload should show measurably
+   slower/incomplete relaxation relative to control at the same length.
+4. **Resting (pre-activation) SRX fraction drops with length in both
+   conditions, nearly identically (ctrl 0.808→0.696, HCM 0.812→0.699 over
+   800→1200 nm)** — i.e. stretch alone (no Ca) recruits SRX into DRX in this
+   model, a length-dependent thick-filament mechanosensing effect already
+   built in via the force-feedback term. **Directly measurable**: resting
+   Cy3-ATP-type SRX assay on stretched vs. slack myofibrils should show this
+   ~11-percentage-point drop, independent of activation — same assay class
+   used in Pilagov 2025.
+
+### Sensitivity table extended with measurable outputs (6-state ctrl/HCM, current baseline)
+
+Full ranked CSVs: `twitch_6state_{control,HCM}/temp/sweeps/sensitivity_all.csv`
+(now 10 columns: `peak_elast`, `peak_fold`, `peak_dir`, `relax_elast`,
+`relax_fold`, **`shorten_elast`, `srx_elast`**). Top parameters by
+|peak_elast|, current (post-rebaseline) values:
+
+| param | ctrl peak_elast | ctrl srx_elast | HCM peak_elast | HCM srx_elast |
+|---|---|---|---|---|
+| k_off | -1.274 | +0.144 | -1.960 | +0.426 |
+| k_on | +1.178 | -0.132 | +1.765 | -0.372 |
+| cb_number_density | +0.697 | -0.009 | +0.774 | -0.061 |
+| k_3 | +0.688 | -0.116 | +0.771 | -0.159 |
+| k_1 | +0.634 | -0.240 | +0.650 | -0.348 |
+| k_7_0 | -0.530 | +0.034 | -0.432 | +0.053 |
+| k_coop | -0.106 | +0.005 | -0.094 | +0.014 |
+| k_7_1 | -0.014 | -0.002 | -0.036 | +0.012 |
+
+**Findings:**
+1. **`shorten_elast` ≈ `peak_elast` for essentially every kinetic parameter**
+   (e.g. k_off -1.2738 peak vs -1.2738 shorten) — shortening is almost a pure
+   linear readout of force under this model's fixed series compliance, so a
+   sarcomere-shortening measurement would mostly just re-confirm a force
+   measurement for any kinetic-rate perturbation.
+2. **Exception: `passive_hsl_slack`.** Peak and shortening elasticity
+   *diverge in sign* (ctrl: peak −1.196 vs shorten **+0.760**; HCM: peak
+   −0.271 vs shorten **+0.527**). This is the one parameter where a
+   shortening measurement is NOT redundant with a force measurement — moving
+   slack length changes force and shortening in opposite local directions,
+   making %shortening the more diagnostic readout specifically for
+   titin/slack-length questions.
+3. **SRX elasticity is small in absolute magnitude (bounded 0-1 output) but
+   directionally consistent**: force-increasing kinetic params (k_on, k_3,
+   k_1, cb_number_density) all carry negative `srx_elast` (more force → more
+   SRX recruited into DRX at peak); force-decreasing params (k_off, k_2)
+   carry positive `srx_elast`. **k_1's SRX footprint (−0.240 ctrl / −0.348
+   HCM) is comparable to or larger than k_off's and k_3's** — concrete
+   measurable statement: *a 10% increase in k_1 predicts roughly a
+   2.4-point (ctrl) / 3.5-point (HCM) drop in SRX fraction at peak force,
+   checkable by the same Cy3-ATP pulse-chase assay class as Pilagov 2025.*
+4. **k_coop and k_7_1 remain low on every measurable axis** (peak, shorten,
+   AND srx all <0.1 in magnitude) — reinforces the 2026-07-07 classification
+   of k_coop as a low-leverage shape parameter (candidate to fix rather than
+   float) independent of which measurable output is used to judge it.
+
+### Methodology note (transient, already fixed)
+The first concurrent MATLAB run (2 batch instances launched simultaneously
+for ctrl+HCM) produced spurious all-NaN results for the baseline row and the
+first parameter processed (`k_1`) in both models — a startup-race artifact,
+not a code or model bug (confirmed via a sequential single-instance rerun of
+just `k_1`, which reproduced clean, non-NaN values matching the rest of the
+sweep's pattern). Both CSVs' `k_1` rows were patched with the corrected
+sequential values; all other rows were unaffected (only the very first ~6
+calls in each process were hit). Flag for future runs: avoid launching 2
+sensitivity/length-sweep batch jobs at the exact same instant, or discard/
+recheck the first parameter processed if run concurrently.
+
+### Files (this update)
+- New: `Code/Fitting/length_sweep_6state.m`
+- Modified (additive columns only): `Code/Fitting/sensitivity_all_params.m`
+- New per-model outputs: `twitch_6state_{control,HCM}/temp/sweeps/length_sweep.{csv,png}`
+- Refreshed: `twitch_6state_{control,HCM}/temp/sweeps/sensitivity_all.{csv,png}`
+  (now current-baseline values with 4 measurable-output columns; supersedes
+  the 2026-07-07 6-state rows in the table above for those two models — 3/4-state
+  rows in the original table are unchanged/still at the old baseline)
