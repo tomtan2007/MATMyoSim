@@ -11,7 +11,13 @@ if ~isfolder('temp/best'), mkdir('temp/best'); end
 opt = loadjson(opt_file);
 opt_structure = opt.MyoSim_optimization;
 opt_structure.model_working_file_string = opt_structure.job{1}.model_file_string;
-opt_structure.best_model_file_string    = 'temp/best/model_best.json';
+if isfield(opt_structure, 'best_model_folder')
+    best_dir = opt_structure.best_model_folder;
+else
+    best_dir = 'temp/best';
+end
+if ~isfolder(best_dir), mkdir(best_dir); end
+opt_structure.best_model_file_string    = fullfile(best_dir, 'model_best.json');
 
 fit_controller(opt_structure);
 end
