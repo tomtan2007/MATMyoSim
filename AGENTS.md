@@ -180,7 +180,7 @@ transition rates might be formulated mathematically.
 - **plot_all_fits.m must mirror evaluate_time_fit.m**: optimizer takes LAST n rows of simulation. Use `sim_window = sim_all(end - n_tgt + 1 : end)` then align late passive region — NOT mean of first rows
 
 ### MATLAB path / worktrees shadowing
-`.Codex/worktrees/` sorts before `Code/` alphabetically — old engine files shadow current ones. All demo and sweep scripts must include:
+`.claude/worktrees/` sorts before `Code/` alphabetically — old engine files shadow current ones. All demo and sweep scripts must include:
 ```matlab
 addpath(genpath(fullfile(repo_root, 'Code', 'System')));
 ```
@@ -258,7 +258,7 @@ Still generally true regardless of which fit run is current:
   - **Active-only error window** (`code/fit/evaluate_time_fit.m`): rewrote so SSE is computed only over rows from activation onset (target>5% above min) to end. Pre-activation rows are used only to baseline-shift sim to match target's passive level. **This fixes the "two-stage curve change" problem** — previously the optimizer was wasting effort fitting the flat passive region; now it focuses entirely on the twitch shape.
   - **Bug fix in `update_json_model_file.m`**: parameter matching used `strfind` (substring), so `parameters.k_1` matched `k_10, k_11, k_12, k_13, k_14` → "found more than once" error. Changed to exact-suffix match (`endsWith(field, '.' + needle)`). Without this fix the 6-state fit crashes immediately.
   - **k_7_0 in HCM template**: changed 104 → 100 (consistency with R3/R5 starting values). Control template still 104 — flag for review.
-  - **Removed stale Stop hook** from `.Codex/settings.json` (referenced non-existent /Users/tcbnu/... paths).
+  - **Removed stale Stop hook** from `.claude/settings.json` (referenced non-existent /Users/tcbnu/... paths).
   - Launched 3/4/6-state HCM fits. Initial 6-state evals: e dropped from 1.89 → 0.15 quickly. Fits still running in background as of session close.
 - [2026-05-15] Completed HCM twitch fitting for all three models against H251N_target.txt. Final results:
   - 3-state (5p): e=0.03206, ΔAIC=+221
@@ -316,7 +316,7 @@ Still generally true regardless of which fit run is current:
   - **Bug fixes (critical)**:
     - Renamed `@run_fit_*.m` → `demo_fit_*.m` in all 6 demo folders — MATLAB couldn't find functions because filename ≠ function name.
     - Removed stale `run_batch(opt_structure)` call from `fit_worker.m` — old worktree version had a bug (`{i}` using MATLAB's imaginary unit) that crashed every fit.
-    - Added `addpath(genpath(fullfile(repo_root,'Code','System')))` to all 6 demo run scripts — `.Codex/worktrees/` were shadowing Code/System/fit/ functions (fit_worker, evaluate_time_fit, update_json_model_file) with old broken versions.
+    - Added `addpath(genpath(fullfile(repo_root,'Code','System')))` to all 6 demo run scripts — `.claude/worktrees/` were shadowing Code/System/fit/ functions (fit_worker, evaluate_time_fit, update_json_model_file) with old broken versions.
     - VS Code MATLAB extension: set `matlab.matlabInstallPath` in settings.json.
   - **MATLAB license issue**: macOS keychain broken after root password change. Workaround: open MATLAB GUI to re-authenticate (credentials stay in MathWorks Service Host for current session). License backup file at `~/Desktop/matlab_license_backup.mwlicx` — import via Help→Licensing→Activate Software for permanent fix.
 - [2026-06-08] Fit results (penalty-bounded, sequential ctrl→HCM):
@@ -352,7 +352,7 @@ Still generally true regardless of which fit run is current:
   - **k_7_0 paper value decision**: tested Ježek 16 s⁻¹ vs Campbell 104 s⁻¹ empirically. Campbell 104 gave e=0.057 vs Ježek 16 gave e=0.083 (214 AIC units better). Fixed at 104 s⁻¹ for 4-state ctrl and 6-state ctrl/HCM. 4-state HCM model_best.json still has old value 438 — template was not updated, needs refit.
   - **Parameter sweep redesigned** (all 6 `parameter_sweep_*.m` scripts): changed from p-space linspace (clipped) to log-spaced actual values: `actual_vals = actual_best * 10.^linspace(-1, 1, 5)`. Sweeps 0.1× to 10× best-fit in 5 equal log steps regardless of bounds. This is purely for sensitivity analysis; PI confirmed sweep both directions even if hitting bounds.
   - **Sweep titles updated**: all 6 scripts now use `sgtitle('N-State [Control|HCM]', ...)` format.
-  - **SRX=NaN fix** (3-state and 4-state sweep scripts): scripts were missing `addpath(genpath(fullfile(repo_root,'Code','System')))` — `.Codex/worktrees/` was shadowing old kinetic scheme files that don't output M1 correctly. Added explicit addpath to all 4 scripts.
+  - **SRX=NaN fix** (3-state and 4-state sweep scripts): scripts were missing `addpath(genpath(fullfile(repo_root,'Code','System')))` — `.claude/worktrees/` was shadowing old kinetic scheme files that don't output M1 correctly. Added explicit addpath to all 4 scripts.
   - **Repo cleanup**: deleted ~20+ stale PNGs, redundant plot scripts, scratch/diagnostic files.
   - **Parameter table verified** (read directly from model_best.json):
 
