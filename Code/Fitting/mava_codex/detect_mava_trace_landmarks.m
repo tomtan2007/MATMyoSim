@@ -42,8 +42,7 @@ if isempty(rise_idx)
     error('detect_mava_trace_landmarks:noRise', ...
         'Could not detect a sustained pre-peak rise.');
 end
-% Use the local trough level so the baseline is not biased by the initial rise.
-baseline = trough_level;
+baseline = mean(y(trough_idx:max(trough_idx, rise_idx-1)));
 
 L = struct('peak_index', peak_idx, 'trough_index', trough_idx, ...
     'rise_index', rise_idx, 'peak_time', t(peak_idx), ...
