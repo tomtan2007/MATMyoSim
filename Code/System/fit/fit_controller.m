@@ -1,4 +1,4 @@
-function fit_controller(opt_structure, varargin)
+function fit_results = fit_controller(opt_structure, varargin)
 
 p = inputParser;
 addRequired(p, 'opt_structure');
@@ -44,7 +44,7 @@ else
     max_fun_evals = 5000;
 end
 fm_options = optimset('Display', 'iter', 'MaxFunEvals', max_fun_evals, 'TolFun', 1e-6);
-fminsearch(fh, p_vector, fm_options);
+[~, ~, exitflag, fm_output] = fminsearch(fh, p_vector, fm_options);
 
 % Save results JSON and sentinel so monitoring agent can read outcome
 results_dir = fileparts(opt_structure.best_opt_file_string);
@@ -77,6 +77,11 @@ else
     fit_results.aic = NaN;
 end
 fit_results.timestamp = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+fit_results.exitflag = exitflag;
+fit_results.iterations = fm_output.iterations;
+fit_results.func_count = fm_output.funcCount;
+fit_results.algorithm = fm_output.algorithm;
+fit_results.message = fm_output.message;
 
 of = fopen(fullfile(results_dir, 'fit_results.json'), 'w');
 fprintf(of, '%s', savejson('', fit_results));
@@ -90,8 +95,19 @@ fprintf('=== Fit complete: error=%.6f  AIC=%.1f ===\n', best_e, fit_results.aic)
 
     function e = run_trial(p_vector, opt_structure)
 
-        [e, trial_e, sim_output, y_attempt, target_data] = ...
-            fit_worker(p_vector,opt_structure);
+        if isfield(opt_structure, 'test_objective')
+            boundary_penalty = 1e4 * (sum(max(0, p_vector - 1).^2) + ...
+                sum(max(0, -p_vector).^2));
+            p_clamped = max(0, min(1, p_vector));
+            e = opt_structure.test_objective(p_clamped) + boundary_penalty;
+            trial_e = e;
+            sim_output = [];
+            y_attempt = [];
+            target_data = [];
+        else
+            [e, trial_e, sim_output, y_attempt, target_data] = ...
+                fit_worker(p_vector,opt_structure);
+        end
 
         all_e_values = [all_e_values e];
 
@@ -120,8 +136,12 @@ fprintf('=== Fit complete: error=%.6f  AIC=%.1f ===\n', best_e, fit_results.aic)
             
             % Update best_opt_file
             best_opt_job = opt_structure;
+            if isfield(best_opt_job, 'test_objective')
+                best_opt_job = rmfield(best_opt_job, 'test_objective');
+            end
             for i=1:numel(p_vector)
-                best_opt_job.parameter{i}.p_value = p_vector(i);
+                best_opt_job.parameter{i}.p_value_raw = p_vector(i);
+                best_opt_job.parameter{i}.p_value = max(0, min(1, p_vector(i)));
             end
             out_string = savejson('MyoSim_optimization', best_opt_job);
             best_opt_dir = fileparts(opt_structure.best_opt_file_string);
