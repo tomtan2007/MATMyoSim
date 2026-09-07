@@ -25,7 +25,8 @@ if (isfield(opt_structure, 'constraint'))
 end
 
 % Set up for optimization
-best_e = inf;
+best_objective = inf;
+best_fit_error = inf;
 all_e_values = [];
 y_best = [];
 best_p = p_vector;
@@ -68,11 +69,12 @@ catch
     n_active = NaN;
 end
 
-fit_results.best_error     = best_e;
+fit_results.best_error     = best_fit_error;
+fit_results.best_objective = best_objective;
 fit_results.n_free_params  = k;
 fit_results.n_active_points = n_active;
-if ~isnan(n_active) && best_e > 0
-    fit_results.aic = n_active * log(best_e) + 2 * k;
+if ~isnan(n_active) && best_fit_error > 0
+    fit_results.aic = n_active * log(best_fit_error) + 2 * k;
 else
     fit_results.aic = NaN;
 end
@@ -91,7 +93,8 @@ sentinel_file = fullfile(fileparts(results_dir), 'DONE.flag');
 of = fopen(sentinel_file, 'w');
 fprintf(of, 'done\n');
 fclose(of);
-fprintf('=== Fit complete: error=%.6f  AIC=%.1f ===\n', best_e, fit_results.aic);
+fprintf('=== Fit complete: error=%.6f  objective=%.6f  AIC=%.1f ===\n', ...
+    best_fit_error, best_objective, fit_results.aic);
 
     function e = run_trial(p_vector, opt_structure)
 
@@ -99,8 +102,8 @@ fprintf('=== Fit complete: error=%.6f  AIC=%.1f ===\n', best_e, fit_results.aic)
             boundary_penalty = 1e4 * (sum(max(0, p_vector - 1).^2) + ...
                 sum(max(0, -p_vector).^2));
             p_clamped = max(0, min(1, p_vector));
-            e = opt_structure.test_objective(p_clamped) + boundary_penalty;
-            trial_e = e;
+            trial_e = opt_structure.test_objective(p_clamped);
+            e = trial_e + boundary_penalty;
             sim_output = [];
             y_attempt = [];
             target_data = [];
@@ -109,16 +112,17 @@ fprintf('=== Fit complete: error=%.6f  AIC=%.1f ===\n', best_e, fit_results.aic)
                 fit_worker(p_vector,opt_structure);
         end
 
+        fit_error = mean(trial_e);
         all_e_values = [all_e_values e];
 
         % First time
         if (numel(all_e_values) == 1)
-            best_e = e;
             y_best = y_attempt;
         end
-        
-        if (e <= best_e)
-            best_e = e;
+
+        if (e <= best_objective)
+            best_objective = e;
+            best_fit_error = fit_error;
             y_best = y_attempt;
             best_p = p_vector;
             if (isfield(opt_structure, 'model_working_file_string'))
@@ -139,9 +143,30 @@ fprintf('=== Fit complete: error=%.6f  AIC=%.1f ===\n', best_e, fit_results.aic)
             if isfield(best_opt_job, 'test_objective')
                 best_opt_job = rmfield(best_opt_job, 'test_objective');
             end
-            for i=1:numel(p_vector)
-                best_opt_job.parameter{i}.p_value_raw = p_vector(i);
-                best_opt_job.parameter{i}.p_value = max(0, min(1, p_vector(i)));
+            p_counter = 0;
+            for i = 1 : numel(best_opt_job.parameter)
+                p_counter = p_counter + 1;
+                best_opt_job.parameter{i}.p_value_raw = p_vector(p_counter);
+                best_opt_job.parameter{i}.p_value = ...
+                    max(0, min(1, p_vector(p_counter)));
+            end
+            if isfield(best_opt_job, 'constraint')
+                for i = 1 : numel(best_opt_job.constraint)
+                    if isfield(best_opt_job.constraint{i}, ...
+                            'parameter_multiplier')
+                        for j = 1 : numel(best_opt_job.constraint{i}. ...
+                                parameter_multiplier)
+                            p_counter = p_counter + 1;
+                            multiplier = best_opt_job.constraint{i}. ...
+                                parameter_multiplier{j};
+                            multiplier.p_value_raw = p_vector(p_counter);
+                            multiplier.p_value = max(0, ...
+                                min(1, p_vector(p_counter)));
+                            best_opt_job.constraint{i}. ...
+                                parameter_multiplier{j} = multiplier;
+                        end
+                    end
+                end
             end
             out_string = savejson('MyoSim_optimization', best_opt_job);
             best_opt_dir = fileparts(opt_structure.best_opt_file_string);
