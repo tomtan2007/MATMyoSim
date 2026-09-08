@@ -7,11 +7,19 @@ if ~isfile(manifest_file)
     error('summarize_mava_sequential_run:missingManifest', ...
         'Run capsule has no manifest: %s.', manifest_file);
 end
-manifest = jsondecode(fileread(manifest_file));
-fixture_mode = isfield(manifest, 'fixture_mode') && manifest.fixture_mode;
+stored_manifest = jsondecode(fileread(manifest_file));
+signature_fields = {'input_signature','immutable_signature', ...
+    'materialization_signature','state_signature'};
+has_signature = any(isfield(stored_manifest, signature_fields));
+fixture_mode = ~has_signature && ...
+    isfield(stored_manifest, 'fixture_mode') && stored_manifest.fixture_mode;
 if ~fixture_mode
+    settings = settings_from_signed_manifest(stored_manifest);
+    manifest = mava_run_manifest(run_dir, settings, 'summarize');
     validate_production_manifest(manifest);
     validate_production_data(manifest);
+else
+    manifest = stored_manifest;
 end
 
 inventory = as_cells(manifest.inventory);
@@ -431,6 +439,61 @@ if ~isfield(manifest, 'creation_mode') || ...
         ~isfield(manifest, 'status') || ~strcmp(manifest.status, 'complete')
     error('summarize_mava_sequential_run:incompleteRun', ...
         'Production summary requires a complete executed run.');
+end
+end
+
+function settings = settings_from_signed_manifest(manifest)
+try
+    settings = struct;
+    settings.run_id = char(string(manifest.run_id));
+    settings.repository_root = char(string(manifest.repository_root));
+    settings.workbook_file = char(string(manifest.hashes.workbook.path));
+    settings.protocol_file = char(string(manifest.hashes.protocol.path));
+    settings.baseline_templates = struct( ...
+        'Control', char(string( ...
+        manifest.hashes.baseline_templates.Control.path)), ...
+        'H251N', char(string( ...
+        manifest.hashes.baseline_templates.H251N.path)));
+    settings.options_files = struct( ...
+        'Control', char(string(manifest.hashes.options.Control.path)), ...
+        'H251N', char(string(manifest.hashes.options.H251N.path)));
+
+    source_records = as_cells(manifest.hashes.sources);
+    settings.source_files = cellfun(@(item) char(string(item.path)), ...
+        source_records, 'UniformOutput', false);
+
+    group_records = as_cells(manifest.groups);
+    settings.alignment_groups = cell(1, numel(group_records));
+    for i = 1:numel(group_records)
+        group = group_records{i};
+        genotypes = reshape(cellstr(string(group.genotypes)), 1, []);
+        settings.alignment_groups{i} = struct( ...
+            'policy', char(string(group.policy)), ...
+            'genotypes', {genotypes});
+    end
+
+    stage_records = as_cells(manifest.stages);
+    stages = repmat(struct('id', '', 'parameters', {{}}), ...
+        1, numel(stage_records));
+    for i = 1:numel(stage_records)
+        stage = stage_records{i};
+        stages(i).id = char(string(stage.id));
+        stages(i).parameters = reshape( ...
+            cellstr(string(stage.parameters)), 1, []);
+    end
+    settings.stages = stages;
+
+    controls = manifest.settings;
+    settings.scale_mode = char(string(controls.scale_mode));
+    settings.fit_start_index = controls.fit_start_index;
+    settings.restarts = controls.restarts;
+    settings.extra_final_restarts = controls.extra_final_restarts;
+    settings.max_fun_evals = controls.max_fun_evals;
+    settings.tol_fun = controls.tol_fun;
+    settings.tol_x = controls.tol_x;
+catch ME
+    error('mava_run_manifest:resumeMismatch', ...
+        'Could not reconstruct signed manifest settings: %s', ME.message);
 end
 end
 

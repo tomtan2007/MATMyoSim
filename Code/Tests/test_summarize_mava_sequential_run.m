@@ -103,20 +103,29 @@ summarize_mava_sequential_run(run_dir);
 assert(strcmp(fileread(decision_file), decision_bytes), ...
     'A hash-bound adaptive decision must remain byte-identical.');
 
-tampered_dir = fullfile(run_dir, 'production_tamper');
-tampered = build_fixture(tampered_dir);
-tampered = rmfield(tampered, 'fixture_mode');
-data_item = tampered.materialization.data_files{1};
-data_item.target_sha256 = mava_sha256(data_item.target_file);
-data_item.protocol_sha256 = mava_sha256(data_item.protocol_file);
-data_item.metrics_sha256 = mava_sha256(data_item.metrics_file);
-tampered.materialization.data_files{1} = data_item;
-write_text(fullfile(tampered_dir, 'manifest.json'), jsonencode(tampered));
-writematrix(target_for_tamper(data_item.target_file) + 1, ...
-    data_item.target_file, 'Delimiter', 'tab');
-assert_throws(@() summarize_mava_sequential_run(tampered_dir), ...
-    'summarize_mava_sequential_run:dataHashMismatch', ...
-    'Production summaries must reject changed manifest-listed data.');
+signed_dir = fullfile(run_dir, 'signed_manifest_tamper');
+signed_settings = signed_fixture_settings(repo_root);
+signed = mava_run_manifest(signed_dir, signed_settings, 'execute');
+validated = mava_run_manifest(signed_dir, signed_settings, 'summarize');
+assert(strcmp(validated.input_signature, signed.input_signature), ...
+    'The production tamper fixture must start as a valid signed capsule.');
+assert_throws(@() summarize_mava_sequential_run(signed_dir), ...
+    'summarize_mava_sequential_run:incompleteRun', ...
+    'Untampered signed settings must reconstruct and validate successfully.');
+signed.inventory{1}.required = 0;
+write_text(fullfile(signed_dir, 'manifest.json'), jsonencode(signed));
+assert_throws(@() summarize_mava_sequential_run(signed_dir), ...
+    'mava_run_manifest:resumeMismatch', ...
+    'Direct production summaries must validate signed inventory state.');
+assert(~isfolder(fullfile(signed_dir, 'tables')) && ...
+    ~isfolder(fullfile(signed_dir, 'figures')), ...
+    'Signed-manifest tampering must be rejected before summary output.');
+signed.fixture_mode = true;
+write_text(fullfile(signed_dir, 'manifest.json'), jsonencode(signed));
+assert_throws(@() summarize_mava_sequential_run(signed_dir), ...
+    'mava_run_manifest:resumeMismatch', ...
+    ['Adding the unsigned fixture flag must not downgrade a signed ' ...
+    'production capsule.']);
 
 fprintf('PASS: manifest-only Mava sequential summarizer\n');
 end
@@ -234,6 +243,38 @@ for i = 1:numel(names)
 end
 end
 
+function settings = signed_fixture_settings(repo_root)
+settings = struct;
+settings.run_id = 'signed_summary_fixture';
+settings.repository_root = repo_root;
+settings.workbook_file = fullfile(repo_root, 'Code', 'System', ...
+    'experimental_data', 'Mava data.xlsx');
+settings.protocol_file = fullfile(repo_root, 'Code', 'System', ...
+    'protocols', 'protocol_1s.txt');
+settings.baseline_templates = struct( ...
+    'Control', fullfile(repo_root, 'Code', 'Fitting', ...
+        'twitch_6state_control', 'temp', 'best', 'model_best.json'), ...
+    'H251N', fullfile(repo_root, 'Code', 'Fitting', ...
+        'twitch_6state_HCM', 'temp', 'best', 'model_best.json'));
+settings.options_files = struct( ...
+    'Control', fullfile(repo_root, 'Code', 'Fitting', ...
+        'twitch_6state_control', 'sim_input', 'sim_options.json'), ...
+    'H251N', fullfile(repo_root, 'Code', 'Fitting', ...
+        'twitch_6state_HCM', 'sim_input', 'sim_options.json'));
+settings.source_files = {fullfile(repo_root, 'Code', 'Fitting', ...
+    'mava_codex', 'mava_run_manifest.m')};
+settings.alignment_groups = {struct('policy', 'shared_by_genotype', ...
+    'genotypes', {{'Control'}})};
+settings.scale_mode = 'peak';
+settings.fit_start_index = 481;
+settings.restarts = 1;
+settings.extra_final_restarts = 0;
+settings.max_fun_evals = 10;
+settings.tol_fun = 1e-5;
+settings.tol_x = 1e-3;
+settings.stages = mava_parameter_stages();
+end
+
 function write_text(file, value)
 parent = fileparts(file);
 if ~isfolder(parent), mkdir(parent); end
@@ -241,10 +282,6 @@ fid = fopen(file, 'w');
 assert(fid >= 0, 'Could not write fixture file %s.', file);
 cleanup = onCleanup(@() fclose(fid));
 fprintf(fid, '%s', value);
-end
-
-function values = target_for_tamper(file)
-values = readmatrix(file);
 end
 
 function assert_throws(f, identifier, message)
