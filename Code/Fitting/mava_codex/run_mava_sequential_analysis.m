@@ -29,10 +29,23 @@ addParameter(p, 'tol_fun', defaults.tol_fun);
 addParameter(p, 'tol_x', defaults.tol_x);
 addParameter(p, 'fit_start_index', defaults.fit_start_index);
 addParameter(p, 'scale_mode', defaults.scale_mode);
+addParameter(p, 'activate_optional_final_restarts', false);
 parse(p, varargin{:});
 
 settings = defaults;
 parsed = p.Results;
+activate_optional = parsed.activate_optional_final_restarts;
+parsed = rmfield(parsed, 'activate_optional_final_restarts');
+if ~isscalar(activate_optional) || ...
+        ~(islogical(activate_optional) || isnumeric(activate_optional))
+    error('run_mava_sequential_analysis:badOptionalActivation', ...
+        'Optional-final-restart activation must be a scalar logical flag.');
+end
+activate_optional = logical(activate_optional);
+if activate_optional && ~strcmp(mode, 'resume')
+    error('run_mava_sequential_analysis:badOptionalActivation', ...
+        'Optional final restarts may be activated only in resume mode.');
+end
 names = fieldnames(parsed);
 for i = 1:numel(names)
     settings.(names{i}) = parsed.(names{i});
@@ -43,6 +56,7 @@ run_dir = fullfile(settings.output_root, run_id);
 
 manifest = mava_run_manifest(run_dir, settings, mode);
 if strcmp(mode, 'summarize')
+    assert_summarizable(manifest);
     if exist('summarize_mava_sequential_run', 'file') ~= 2
         error('run_mava_sequential_analysis:summarizerUnavailable', ...
             'Task 6 summarizer is not available on the current path.');
@@ -51,29 +65,40 @@ if strcmp(mode, 'summarize')
     run.summary = summarize_mava_sequential_run(run_dir);
     return;
 end
+if strcmp(mode, 'resume') && strcmp(manifest.creation_mode, 'dry_run')
+    error('run_mava_sequential_analysis:runNotExecutable', ...
+        'A dry-run capsule cannot be converted into an executed run.');
+end
+if activate_optional
+    manifest.materialization.optional_final_restarts_active = 1;
+    manifest = seal_and_write_manifest(run_dir, manifest);
+end
 
 try
     if ismember(mode, {'dry_run','execute'})
         preprocess_policies(run_dir, settings);
+        manifest = materialize_data_hashes(run_dir, manifest);
     else
         validate_preprocessed_data(run_dir, settings);
     end
 
     if strcmp(mode, 'dry_run')
-        records = plan_dry_run(run_dir, settings);
+        [records, manifest] = plan_dry_run(run_dir, settings, manifest);
         manifest.records_planned = numel(records);
         manifest.status = 'dry_run_complete';
-        write_json_atomic(fullfile(run_dir, 'manifest.json'), manifest);
+        manifest = seal_and_write_manifest(run_dir, manifest);
         run = manifest;
         return;
     end
 
+    manifest.records_planned = active_record_count(manifest);
     manifest.status = 'running';
     manifest.mode = mode;
-    write_json_atomic(fullfile(run_dir, 'manifest.json'), manifest);
-    run_fits_serially(run_dir, settings, strcmp(mode, 'resume'));
+    manifest = seal_and_write_manifest(run_dir, manifest);
+    manifest = run_fits_serially(run_dir, settings, ...
+        strcmp(mode, 'resume'), manifest);
     manifest.status = 'complete';
-    write_json_atomic(fullfile(run_dir, 'manifest.json'), manifest);
+    manifest = seal_and_write_manifest(run_dir, manifest);
     run = manifest;
 catch ME
     record_run_failure(run_dir, ME);
@@ -100,17 +125,22 @@ settings.options_files = struct( ...
     'twitch_6state_control', 'sim_input', 'sim_options.json'), ...
     'H251N', fullfile(repo_root, 'Code', 'Fitting', ...
     'twitch_6state_HCM', 'sim_input', 'sim_options.json'));
-settings.source_files = { ...
+runner_sources = { ...
+    fullfile(script_dir, 'run_mava_sequential_analysis.m'), ...
+    fullfile(script_dir, 'mava_run_manifest.m'), ...
+    fullfile(script_dir, 'mava_sha256.m'), ...
     fullfile(script_dir, 'prepare_mava_data.m'), ...
     fullfile(script_dir, 'detect_mava_trace_landmarks.m'), ...
     fullfile(script_dir, 'mava_alignment_shifts.m'), ...
     fullfile(script_dir, 'mava_parameter_stages.m'), ...
     fullfile(script_dir, 'mava_deterministic_start.m'), ...
-    fullfile(script_dir, 'build_mava_sequential_fit_config.m'), ...
-    fullfile(repo_root, 'Code', 'System', 'fit', 'fit_controller.m'), ...
-    fullfile(repo_root, 'Code', 'System', 'fit', 'fit_worker.m'), ...
-    fullfile(repo_root, 'Code', 'System', 'fit', 'update_json_model_file.m'), ...
-    fullfile(repo_root, 'Code', 'System', 'fit', 'evaluate_time_fit.m')};
+    fullfile(script_dir, 'build_mava_sequential_fit_config.m')};
+system_listing = dir(fullfile(repo_root, 'Code', 'System', '**', '*.m'));
+system_sources = arrayfun(@(item) fullfile(item.folder, item.name), ...
+    system_listing, 'UniformOutput', false);
+system_sources = sort(system_sources(:));
+system_sources = reshape(system_sources, 1, []);
+settings.source_files = [runner_sources system_sources];
 settings.alignment_groups = { ...
     struct('policy', 'shared_by_genotype', ...
     'genotypes', {{'Control','H251N'}}), ...
@@ -175,7 +205,7 @@ for i = 1:numel(policies)
 end
 end
 
-function records = plan_dry_run(run_dir, settings)
+function [records, manifest] = plan_dry_run(run_dir, settings, manifest)
 records = {};
 for group_index = 1:numel(settings.alignment_groups)
     group = settings.alignment_groups{group_index};
@@ -184,9 +214,9 @@ for group_index = 1:numel(settings.alignment_groups)
         for stage_index = 1:numel(settings.stages)
             stage = settings.stages(stage_index);
             for restart = 1:settings.restarts
-                [~, record] = build_mava_sequential_fit_config(run_dir, ...
-                    group.policy, genotype, stage, restart, [], settings);
-                write_result_status(record, 'planned', struct);
+                [~, record, manifest] = get_or_create_config(run_dir, ...
+                    group.policy, genotype, stage, restart, [], settings, ...
+                    false, manifest);
                 records{end+1} = record; %#ok<AGROW>
             end
         end
@@ -194,7 +224,7 @@ for group_index = 1:numel(settings.alignment_groups)
 end
 end
 
-function run_fits_serially(run_dir, settings, is_resume)
+function manifest = run_fits_serially(run_dir, settings, is_resume, manifest)
 for group_index = 1:numel(settings.alignment_groups)
     group = settings.alignment_groups{group_index};
     for genotype_index = 1:numel(group.genotypes)
@@ -203,7 +233,8 @@ for group_index = 1:numel(settings.alignment_groups)
         for stage_index = 1:numel(settings.stages)
             stage = settings.stages(stage_index);
             restart_count = settings.restarts;
-            if stage_index == numel(settings.stages)
+            if stage_index == numel(settings.stages) && ...
+                    manifest.materialization.optional_final_restarts_active
                 restart_count = restart_count + settings.extra_final_restarts;
             end
             for restart = 1:restart_count
@@ -211,9 +242,9 @@ for group_index = 1:numel(settings.alignment_groups)
                 if restart == 1 && stage_index > 1
                     inherited = previous_best;
                 end
-                [config_file, record] = get_or_create_config(run_dir, ...
+                [config_file, record, manifest] = get_or_create_config(run_dir, ...
                     group.policy, genotype, stage, restart, inherited, ...
-                    settings, is_resume);
+                    settings, is_resume, manifest);
                 if is_resume && result_is_complete(record)
                     continue;
                 end
@@ -226,8 +257,9 @@ for group_index = 1:numel(settings.alignment_groups)
 end
 end
 
-function [config_file, record] = get_or_create_config(run_dir, policy, ...
-    genotype, stage, restart, previous_best, settings, is_resume)
+function [config_file, record, manifest] = get_or_create_config(run_dir, ...
+    policy, genotype, stage, restart, previous_best, settings, is_resume, ...
+    manifest)
 config_file = fullfile(run_dir, 'configs', sprintf('%s__%s__%s__s%02d.json', ...
     policy, genotype, stage.id, restart));
 result_dir = fullfile(run_dir, 'results', policy, genotype, stage.id, ...
@@ -235,6 +267,7 @@ result_dir = fullfile(run_dir, 'results', policy, genotype, stage.id, ...
 if ~isfile(config_file)
     [config_file, record] = build_mava_sequential_fit_config(run_dir, ...
         policy, genotype, stage, restart, previous_best, settings);
+    manifest = record_config_hash(run_dir, manifest, record);
     write_result_status(record, 'planned', struct);
     return;
 end
@@ -245,6 +278,7 @@ end
 record = struct('alignment_policy', policy, 'genotype', genotype, ...
     'stage', stage.id, 'restart', restart, 'config_file', config_file, ...
     'result_dir', result_dir, 'parameter_names', {stage.parameters});
+validate_manifest_config_hash(manifest, record);
 validate_existing_config(config_file, stage, restart, previous_best, settings);
 end
 
@@ -392,6 +426,111 @@ end
 write_json_atomic(fullfile(record.result_dir, 'status.json'), status);
 end
 
+function manifest = materialize_data_hashes(run_dir, manifest)
+for i = 1:numel(manifest.materialization.data_files)
+    item = manifest.materialization.data_files{i};
+    if ~isfile(item.target_file) || ~isfile(item.protocol_file)
+        error('run_mava_sequential_analysis:missingPreparedData', ...
+            'Prepared target or protocol is missing for %s.', item.id);
+    end
+    item.target_sha256 = mava_sha256(item.target_file);
+    item.protocol_sha256 = mava_sha256(item.protocol_file);
+    manifest.materialization.data_files{i} = item;
+end
+manifest = seal_and_write_manifest(run_dir, manifest);
+end
+
+function manifest = record_config_hash(run_dir, manifest, record)
+index = find_inventory_index(manifest, record.alignment_policy, ...
+    record.genotype, record.stage, record.restart);
+inventory = manifest.inventory{index};
+if ~strcmp(inventory.config_file, record.config_file) || ...
+        ~strcmp(inventory.result_dir, record.result_dir)
+    error('mava_run_manifest:resumeMismatch', ...
+        'Materialized config paths do not match manifest inventory.');
+end
+entry = manifest.materialization.configs{index};
+if ~isempty(entry.sha256)
+    error('mava_run_manifest:resumeMismatch', ...
+        'Refusing to replace an already materialized config hash.');
+end
+entry.sha256 = mava_sha256(record.config_file);
+manifest.materialization.configs{index} = entry;
+manifest = seal_and_write_manifest(run_dir, manifest);
+end
+
+function validate_manifest_config_hash(manifest, record)
+index = find_inventory_index(manifest, record.alignment_policy, ...
+    record.genotype, record.stage, record.restart);
+expected = manifest.materialization.configs{index}.sha256;
+if isempty(expected) || ~strcmp(mava_sha256(record.config_file), expected)
+    error('mava_run_manifest:resumeMismatch', ...
+        'Existing config hash does not match manifest: %s.', ...
+        record.config_file);
+end
+end
+
+function index = find_inventory_index(manifest, policy, genotype, stage, restart)
+matches = cellfun(@(item) strcmp(item.alignment_policy, policy) && ...
+    strcmp(item.genotype, genotype) && strcmp(item.stage, stage) && ...
+    item.restart == restart, manifest.inventory);
+index = find(matches);
+if numel(index) ~= 1
+    error('mava_run_manifest:resumeMismatch', ...
+        'Fit identity is missing or duplicated in manifest inventory.');
+end
+end
+
+function count = active_record_count(manifest)
+required = cellfun(@(item) item.required, manifest.inventory);
+if manifest.materialization.optional_final_restarts_active
+    count = numel(required);
+else
+    count = sum(required);
+end
+end
+
+function assert_summarizable(manifest)
+if strcmp(manifest.creation_mode, 'dry_run') || ...
+        ~strcmp(manifest.status, 'complete')
+    error('run_mava_sequential_analysis:runNotSummarizable', ...
+        'Only complete executed capsules can be summarized.');
+end
+for i = 1:numel(manifest.inventory)
+    item = manifest.inventory{i};
+    active = item.required || ...
+        manifest.materialization.optional_final_restarts_active;
+    if ~active, continue; end
+    record = struct('alignment_policy', item.alignment_policy, ...
+        'genotype', item.genotype, 'stage', item.stage, ...
+        'restart', item.restart, 'result_dir', item.result_dir);
+    if ~result_is_complete(record)
+        error('run_mava_sequential_analysis:runNotSummarizable', ...
+            'Active result is incomplete or hash-invalid: %s.', item.id);
+    end
+end
+end
+
+function manifest = seal_and_write_manifest(run_dir, manifest)
+manifest.materialization_signature = ...
+    value_signature(manifest.materialization);
+state = struct('mode', manifest.mode, 'status', manifest.status, ...
+    'records_planned', manifest.records_planned);
+if isfield(manifest, 'failure')
+    state.failure = manifest.failure;
+end
+manifest.state_signature = value_signature(state);
+write_json_atomic(fullfile(run_dir, 'manifest.json'), manifest);
+end
+
+function signature = value_signature(value)
+bytes = unicode2native(jsonencode(value), 'UTF-8');
+engine = java.security.MessageDigest.getInstance('SHA-256');
+engine.update(bytes);
+raw_digest = typecast(engine.digest(), 'uint8');
+signature = lower(reshape(dec2hex(raw_digest, 2).', 1, []));
+end
+
 function record_run_failure(run_dir, failure)
 manifest_file = fullfile(run_dir, 'manifest.json');
 if ~isfile(manifest_file), return; end
@@ -400,7 +539,7 @@ try
     manifest.status = 'incomplete';
     manifest.failure = struct('identifier', failure.identifier, ...
         'message', failure.message);
-    write_json_atomic(manifest_file, manifest);
+    seal_and_write_manifest(run_dir, manifest);
 catch
 end
 end
@@ -416,7 +555,7 @@ if fid < 0
         'Could not write temporary JSON file: %s.', temporary);
 end
 file_cleanup = onCleanup(@() fclose(fid));
-fprintf(fid, '%s', savejson('', value, 'FloatFormat', '%.17g'));
+fprintf(fid, '%s', jsonencode(value));
 clear file_cleanup;
 [ok, message] = movefile(temporary, file, 'f');
 if ~ok

@@ -36,6 +36,10 @@ assert(manifest.settings.fit_start_index == 481 && ...
     'Manifest omitted immutable fit controls.');
 assert(numel(manifest.groups) == 2 && numel(manifest.stages) == 4, ...
     'Manifest omitted the exact alignment groups or parameter stages.');
+required_inventory = cellfun(@(item) item.required, manifest.inventory);
+assert(numel(required_inventory) == 60 && sum(required_inventory) == 48, ...
+    ['Default manifest must plan 48 active base fits while declaring 12 ' ...
+    'inactive optional final-stage restarts.']);
 
 duplicate_id = '';
 try
@@ -49,6 +53,22 @@ assert(strcmp(duplicate_id, 'mava_run_manifest:runExists'), ...
 resumed = mava_run_manifest(run_dir, settings, 'resume');
 assert(strcmp(resumed.run_id, manifest.run_id), ...
     'Matching resume settings must validate the existing manifest.');
+
+manifest_bytes = fileread(fullfile(run_dir, 'manifest.json'));
+tampered = resumed;
+tampered.settings.fit_start_index = 777;
+tampered.groups{1}.policy = 'tampered_policy';
+tampered.hashes.workbook.sha256(1) = '0';
+write_json(fullfile(run_dir, 'manifest.json'), tampered);
+integrity_id = '';
+try
+    mava_run_manifest(run_dir, settings, 'resume');
+catch ME
+    integrity_id = ME.identifier;
+end
+assert(strcmp(integrity_id, 'mava_run_manifest:resumeMismatch'), ...
+    'Persisted settings/groups/hashes must be checked against their signature.');
+write_text(fullfile(run_dir, 'manifest.json'), manifest_bytes);
 
 changed = settings;
 changed.fit_start_index = 482;
@@ -104,4 +124,16 @@ end
 
 function remove_if_present(folder)
 if isfolder(folder), rmdir(folder, 's'); end
+end
+
+function write_json(file, value)
+write_text(file, jsonencode(value));
+end
+
+function write_text(file, value)
+fid = fopen(file, 'w');
+assert(fid >= 0, 'Could not write manifest integrity fixture.');
+cleanup = onCleanup(@() fclose(fid));
+fprintf(fid, '%s', value);
+clear cleanup;
 end
