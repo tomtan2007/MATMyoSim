@@ -70,6 +70,19 @@ assert(strcmp(integrity_id, 'mava_run_manifest:resumeMismatch'), ...
     'Persisted settings/groups/hashes must be checked against their signature.');
 write_text(fullfile(run_dir, 'manifest.json'), manifest_bytes);
 
+tampered = resumed;
+tampered.created_at = '2099-01-01T00:00:00-05:00';
+write_json(fullfile(run_dir, 'manifest.json'), tampered);
+created_at_id = '';
+try
+    mava_run_manifest(run_dir, settings, 'resume');
+catch ME
+    created_at_id = ME.identifier;
+end
+assert(strcmp(created_at_id, 'mava_run_manifest:resumeMismatch'), ...
+    'Creation time must be part of the signed immutable projection.');
+write_text(fullfile(run_dir, 'manifest.json'), manifest_bytes);
+
 changed = settings;
 changed.fit_start_index = 482;
 mismatch_id = '';

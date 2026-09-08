@@ -70,8 +70,7 @@ if strcmp(mode, 'resume') && strcmp(manifest.creation_mode, 'dry_run')
         'A dry-run capsule cannot be converted into an executed run.');
 end
 if activate_optional
-    manifest.materialization.optional_final_restarts_active = 1;
-    manifest = seal_and_write_manifest(run_dir, manifest);
+    manifest = activate_optional_groups(run_dir, manifest);
 end
 
 try
@@ -234,7 +233,7 @@ for group_index = 1:numel(settings.alignment_groups)
             stage = settings.stages(stage_index);
             restart_count = settings.restarts;
             if stage_index == numel(settings.stages) && ...
-                    manifest.materialization.optional_final_restarts_active
+                    group_has_optional_restarts(manifest, group.policy, genotype)
                 restart_count = restart_count + settings.extra_final_restarts;
             end
             for restart = 1:restart_count
@@ -351,7 +350,9 @@ try
             ~strcmp(status.genotype, record.genotype) || ...
             ~strcmp(status.stage, record.stage) || ...
             status.restart ~= record.restart || ...
-            ~isfield(status, 'artifact_hashes')
+            ~isfield(status, 'artifact_hashes') || ...
+            ~isfield(status, 'config_sha256') || ...
+            ~strcmp(status.config_sha256, mava_sha256(record.config_file))
         return;
     end
     actual = artifact_hashes(record.result_dir);
@@ -374,8 +375,12 @@ best_file = '';
 for restart = 1:restart_count
     result_dir = fullfile(run_dir, 'results', policy, genotype, stage.id, ...
         sprintf('s%02d', restart));
+    config_file = fullfile(run_dir, 'configs', ...
+        sprintf('%s__%s__%s__s%02d.json', policy, genotype, ...
+        stage.id, restart));
     record = struct('alignment_policy', policy, 'genotype', genotype, ...
-        'stage', stage.id, 'restart', restart, 'result_dir', result_dir);
+        'stage', stage.id, 'restart', restart, ...
+        'config_file', config_file, 'result_dir', result_dir);
     if ~result_is_complete(record)
         continue;
     end
@@ -435,6 +440,11 @@ for i = 1:numel(manifest.materialization.data_files)
     end
     item.target_sha256 = mava_sha256(item.target_file);
     item.protocol_sha256 = mava_sha256(item.protocol_file);
+    if ~isfile(item.metrics_file)
+        error('run_mava_sequential_analysis:missingPreparedData', ...
+            'Prepared metrics are missing for %s.', item.id);
+    end
+    item.metrics_sha256 = mava_sha256(item.metrics_file);
     manifest.materialization.data_files{i} = item;
 end
 manifest = seal_and_write_manifest(run_dir, manifest);
@@ -455,6 +465,9 @@ if ~isempty(entry.sha256)
         'Refusing to replace an already materialized config hash.');
 end
 entry.sha256 = mava_sha256(record.config_file);
+loaded = loadjson(record.config_file).MyoSim_optimization;
+entry.resolved_seed = cellfun(@(parameter) parameter.p_value, ...
+    loaded.parameter);
 manifest.materialization.configs{index} = entry;
 manifest = seal_and_write_manifest(run_dir, manifest);
 end
@@ -463,9 +476,14 @@ function validate_manifest_config_hash(manifest, record)
 index = find_inventory_index(manifest, record.alignment_policy, ...
     record.genotype, record.stage, record.restart);
 expected = manifest.materialization.configs{index}.sha256;
-if isempty(expected) || ~strcmp(mava_sha256(record.config_file), expected)
+loaded = loadjson(record.config_file).MyoSim_optimization;
+resolved_seed = cellfun(@(parameter) parameter.p_value, loaded.parameter);
+declared_seed = manifest.materialization.configs{index}.resolved_seed;
+if isempty(expected) || ~strcmp(mava_sha256(record.config_file), expected) || ...
+        isempty(declared_seed) || numel(resolved_seed) ~= numel(declared_seed) || ...
+        max(abs(resolved_seed - declared_seed)) > 1e-12
     error('mava_run_manifest:resumeMismatch', ...
-        'Existing config hash does not match manifest: %s.', ...
+        'Existing config hash or resolved seed does not match manifest: %s.', ...
         record.config_file);
 end
 end
@@ -481,13 +499,99 @@ if numel(index) ~= 1
 end
 end
 
-function count = active_record_count(manifest)
-required = cellfun(@(item) item.required, manifest.inventory);
-if manifest.materialization.optional_final_restarts_active
-    count = numel(required);
-else
-    count = sum(required);
+function manifest = activate_optional_groups(run_dir, manifest)
+decision_path = manifest.materialization.adaptive_restart_decision.path;
+if ~isfile(decision_path)
+    error('run_mava_sequential_analysis:adaptiveDecisionMissing', ...
+        'Task 6 adaptive restart decision is missing: %s.', decision_path);
 end
+try
+    decision = loadjson(decision_path);
+catch ME
+    error('run_mava_sequential_analysis:adaptiveDecisionInvalid', ...
+        'Could not read adaptive restart decision: %s', ME.message);
+end
+required_fields = {'activate','groups','schema_version'};
+if ~isequal(sort(fieldnames(decision)), required_fields') || ...
+        ~isscalar(decision.schema_version) || decision.schema_version ~= 1
+    error('run_mava_sequential_analysis:adaptiveDecisionInvalid', ...
+        'Adaptive decision must contain only schema_version=1, activate, groups.');
+end
+if ~isscalar(decision.activate) || ~isnumeric(decision.activate) || ...
+        decision.activate ~= 1
+    error('run_mava_sequential_analysis:adaptiveDecisionRejected', ...
+        'Adaptive decision must explicitly set activate=true.');
+end
+groups = decision.groups;
+if isstruct(groups), groups = num2cell(groups); end
+if ~iscell(groups) || isempty(groups)
+    error('run_mava_sequential_analysis:adaptiveDecisionInvalid', ...
+        'Adaptive decision must name at least one comparison group.');
+end
+known_ids = cellfun(@(item) item.id, ...
+    manifest.materialization.data_files, 'UniformOutput', false);
+selected_ids = cell(1, numel(groups));
+for i = 1:numel(groups)
+    group = groups{i};
+    if ~isstruct(group) || ...
+            ~isequal(sort(fieldnames(group)), {'id';'reason'}) || ...
+            ~(ischar(group.id) || isstring(group.id)) || ...
+            ~(ischar(group.reason) || isstring(group.reason)) || ...
+            isempty(strtrim(char(string(group.reason))))
+        error('run_mava_sequential_analysis:adaptiveDecisionInvalid', ...
+            'Each adaptive group must contain exactly a nonempty id and reason.');
+    end
+    selected_ids{i} = char(string(group.id));
+    if ~ismember(selected_ids{i}, known_ids)
+        error('run_mava_sequential_analysis:adaptiveDecisionUnknownGroup', ...
+            'Adaptive decision names unknown group: %s.', selected_ids{i});
+    end
+end
+if numel(unique(selected_ids)) ~= numel(selected_ids)
+    error('run_mava_sequential_analysis:adaptiveDecisionInvalid', ...
+        'Adaptive decision contains duplicate comparison groups.');
+end
+assert_base_results_complete(manifest);
+manifest.materialization.optional_final_restart_groups = selected_ids;
+manifest.materialization.optional_final_restart_decisions = groups;
+manifest.materialization.adaptive_restart_decision.sha256 = ...
+    mava_sha256(decision_path);
+manifest = seal_and_write_manifest(run_dir, manifest);
+end
+
+function assert_base_results_complete(manifest)
+for i = 1:numel(manifest.inventory)
+    item = manifest.inventory{i};
+    if ~item.required, continue; end
+    record = struct('alignment_policy', item.alignment_policy, ...
+        'genotype', item.genotype, 'stage', item.stage, ...
+        'restart', item.restart, 'config_file', item.config_file, ...
+        'result_dir', item.result_dir);
+    if ~result_is_complete(record)
+        error('run_mava_sequential_analysis:adaptiveBaseIncomplete', ...
+            'Base result is incomplete or hash-invalid: %s.', item.id);
+    end
+end
+end
+
+function active = group_has_optional_restarts(manifest, policy, genotype)
+selected = manifest.materialization.optional_final_restart_groups;
+if isempty(selected)
+    active = false;
+    return;
+end
+if ischar(selected) || isstring(selected)
+    selected = cellstr(selected);
+end
+id = sprintf('%s__%s', policy, genotype);
+active = any(strcmp(selected, id));
+end
+
+function count = active_record_count(manifest)
+active = cellfun(@(item) item.required || ...
+    group_has_optional_restarts(manifest, item.alignment_policy, ...
+    item.genotype), manifest.inventory);
+count = sum(active);
 end
 
 function assert_summarizable(manifest)
@@ -498,12 +602,13 @@ if strcmp(manifest.creation_mode, 'dry_run') || ...
 end
 for i = 1:numel(manifest.inventory)
     item = manifest.inventory{i};
-    active = item.required || ...
-        manifest.materialization.optional_final_restarts_active;
+    active = item.required || group_has_optional_restarts(manifest, ...
+        item.alignment_policy, item.genotype);
     if ~active, continue; end
     record = struct('alignment_policy', item.alignment_policy, ...
         'genotype', item.genotype, 'stage', item.stage, ...
-        'restart', item.restart, 'result_dir', item.result_dir);
+        'restart', item.restart, 'config_file', item.config_file, ...
+        'result_dir', item.result_dir);
     if ~result_is_complete(record)
         error('run_mava_sequential_analysis:runNotSummarizable', ...
             'Active result is incomplete or hash-invalid: %s.', item.id);

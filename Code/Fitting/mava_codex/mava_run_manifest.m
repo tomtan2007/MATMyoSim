@@ -95,10 +95,14 @@ controls = struct( ...
     'tol_fun', settings.tol_fun, ...
     'tol_x', settings.tol_x);
 inventory = build_inventory(run_dir, settings);
-materialization = struct( ...
-    'optional_final_restarts_active', 0, ...
-    'data_files', {build_data_inventory(run_dir, settings)}, ...
-    'configs', {build_config_materialization(inventory)});
+materialization = struct;
+materialization.optional_final_restart_groups = {};
+materialization.optional_final_restart_decisions = {};
+materialization.adaptive_restart_decision = struct( ...
+    'path', fullfile(run_dir, 'tables', ...
+    'adaptive_restart_decision.json'), 'sha256', '');
+materialization.data_files = build_data_inventory(run_dir, settings);
+materialization.configs = build_config_materialization(inventory);
 
 manifest = struct( ...
     'schema_version', 2, ...
@@ -219,7 +223,9 @@ for group_index = 1:numel(settings.alignment_groups)
             'target_file', fullfile(data_dir, [target_id '_target.txt']), ...
             'target_sha256', '', ...
             'protocol_file', fullfile(data_dir, [target_id '_protocol.txt']), ...
-            'protocol_sha256', '');
+            'protocol_sha256', '', ...
+            'metrics_file', fullfile(data_dir, 'experimental_metrics.csv'), ...
+            'metrics_sha256', '');
     end
 end
 end
@@ -227,7 +233,8 @@ end
 function records = build_config_materialization(inventory)
 records = cell(1, numel(inventory));
 for i = 1:numel(inventory)
-    records{i} = struct('id', inventory{i}.id, 'sha256', '');
+    records{i} = struct('id', inventory{i}.id, 'sha256', '', ...
+        'resolved_seed', []);
 end
 end
 
@@ -262,6 +269,7 @@ end
 
 function projection = immutable_projection(manifest)
 projection = input_projection(manifest);
+projection.created_at = manifest.created_at;
 projection.repository_head = manifest.repository_head;
 projection.matlab_version = manifest.matlab_version;
 projection.creation_mode = manifest.creation_mode;
@@ -287,13 +295,40 @@ for i = 1:numel(data_files)
     item = data_files{i};
     if strcmp(manifest.status, 'created') && ...
             isempty(item.target_sha256) && isempty(item.protocol_sha256) && ...
-            ~isfile(item.target_file) && ~isfile(item.protocol_file)
+            isempty(item.metrics_sha256) && ~isfile(item.target_file) && ...
+            ~isfile(item.protocol_file) && ~isfile(item.metrics_file)
         continue;
     end
     validate_required_hash(item.target_file, item.target_sha256, ...
         'prepared target');
     validate_required_hash(item.protocol_file, item.protocol_sha256, ...
         'prepared protocol');
+    validate_required_hash(item.metrics_file, item.metrics_sha256, ...
+        'prepared metrics');
+end
+
+decision = manifest.materialization.adaptive_restart_decision;
+selected_groups = manifest.materialization.optional_final_restart_groups;
+selected_decisions = ...
+    manifest.materialization.optional_final_restart_decisions;
+if isempty(selected_groups) && ...
+        (~isempty(decision.sha256) || ~isempty(selected_decisions))
+    resume_mismatch('Adaptive decision hash exists without activated groups.');
+elseif ~isempty(selected_groups) && ...
+        (isempty(decision.sha256) || isempty(selected_decisions))
+    resume_mismatch('Activated optional groups have no adaptive decision hash.');
+elseif ~isempty(decision.sha256)
+    validate_required_hash(decision.path, decision.sha256, ...
+        'adaptive restart decision');
+    stored_decision = loadjson(decision.path);
+    groups = stored_decision.groups;
+    if isstruct(groups), groups = num2cell(groups); end
+    decision_ids = cellfun(@(item) char(string(item.id)), groups, ...
+        'UniformOutput', false);
+    if ~isequal(decision_ids, selected_groups) || ...
+            ~strcmp(jsonencode(groups), jsonencode(selected_decisions))
+        resume_mismatch('Adaptive decision IDs or reasons differ from manifest.');
+    end
 end
 
 configs = manifest.materialization.configs;
@@ -301,14 +336,32 @@ for i = 1:numel(configs)
     item = configs{i};
     inventory = manifest.inventory{i};
     if isempty(item.sha256)
-        if isfile(inventory.config_file)
+        if ~isempty(item.resolved_seed) || isfile(inventory.config_file)
             resume_mismatch(sprintf( ...
                 'Config exists without a manifest hash: %s.', ...
                 inventory.config_file));
         end
     else
         validate_required_hash(inventory.config_file, item.sha256, 'config');
+        resolved = config_seed(inventory.config_file);
+        if isempty(item.resolved_seed) || ...
+                numel(resolved) ~= numel(item.resolved_seed) || ...
+                max(abs(resolved - item.resolved_seed)) > 1e-12
+            resume_mismatch(sprintf( ...
+                'Resolved config seed mismatch: %s.', ...
+                inventory.config_file));
+        end
     end
+end
+end
+
+function seed = config_seed(config_file)
+try
+    opt = loadjson(config_file).MyoSim_optimization;
+    seed = cellfun(@(parameter) parameter.p_value, opt.parameter);
+catch ME
+    resume_mismatch(sprintf('Could not read config seed %s: %s', ...
+        config_file, ME.message));
 end
 end
 
