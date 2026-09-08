@@ -28,12 +28,14 @@ for i = 1:numel(inventory)
     active(i) = logical(inventory{i}.required) || ...
         optional_group_active(manifest, inventory{i});
 end
+if ~fixture_mode
+    validate_mava_run_semantics(manifest, find(active), 'signed');
+end
 details = repmat(empty_detail(), 1, sum(active));
 detail_index = 0;
 for i = find(active)
     detail_index = detail_index + 1;
-    details(detail_index) = read_record(manifest, inventory{i}, ...
-        i, fixture_mode);
+    details(detail_index) = read_record(manifest, inventory{i}, fixture_mode);
 end
 
 restart = restart_table(details);
@@ -68,7 +70,7 @@ detail = struct('id', '', 'group_id', '', 'alignment_policy', '', ...
     'model', [], 'target_metrics', struct, 'model_metrics', struct);
 end
 
-function detail = read_record(manifest, item, inventory_index, fixture_mode)
+function detail = read_record(manifest, item, fixture_mode)
 detail = empty_detail();
 detail.id = char(string(item.id));
 detail.alignment_policy = char(string(item.alignment_policy));
@@ -92,7 +94,6 @@ if fixture_mode
     calcium_onset = waveform.calcium_onset_time;
     model_mode = 'prezeroed';
 else
-    verify_production_record(manifest, item, inventory_index);
     fit_file = fullfile(item.result_dir, 'fit_results.json');
     best_file = fullfile(item.result_dir, 'best_optimization.json');
     model_file = fullfile(item.result_dir, 'model_best.json');
@@ -514,38 +515,6 @@ for i = 1:numel(data)
 end
 end
 
-function verify_production_record(manifest, item, index)
-required = {fullfile(item.result_dir,'model_best.json'), ...
-    fullfile(item.result_dir,'best_optimization.json'), ...
-    fullfile(item.result_dir,'fit_results.json'), ...
-    fullfile(item.result_dir,'status.json')};
-if ~all(cellfun(@isfile, required))
-    error('summarize_mava_sequential_run:missingArtifact', ...
-        'Manifest-listed result is incomplete: %s.', item.id);
-end
-status = jsondecode(fileread(required{4}));
-if ~strcmp(status.status, 'complete') || ...
-        ~strcmp(status.alignment_policy, item.alignment_policy) || ...
-        ~strcmp(status.genotype, item.genotype) || ...
-        ~strcmp(status.stage, item.stage) || status.restart ~= item.restart
-    error('summarize_mava_sequential_run:badStatus', ...
-        'Completion status does not match manifest identity: %s.', item.id);
-end
-if ~strcmp(status.config_sha256, mava_sha256(item.config_file)) || ...
-        ~strcmp(status.artifact_hashes.model_best, mava_sha256(required{1})) || ...
-        ~strcmp(status.artifact_hashes.best_optimization, mava_sha256(required{2})) || ...
-        ~strcmp(status.artifact_hashes.fit_results, mava_sha256(required{3}))
-    error('summarize_mava_sequential_run:hashMismatch', ...
-        'Result artifact hash mismatch: %s.', item.id);
-end
-configs = as_cells(manifest.materialization.configs);
-if index > numel(configs) || isempty(configs{index}.sha256) || ...
-        ~strcmp(configs{index}.sha256, mava_sha256(item.config_file))
-    error('summarize_mava_sequential_run:hashMismatch', ...
-        'Config does not match manifest materialization: %s.', item.id);
-end
-end
-
 function active = optional_group_active(manifest, item)
 active = false;
 if ~isfield(manifest, 'materialization') || ...
@@ -627,10 +596,12 @@ end
 end
 
 function value = fit_aic(fit, id)
-if isfield(fit, 'AIC')
-    value = fit.AIC;
-elseif isfield(fit, 'aic')
+if isfield(fit, 'aic')
     value = fit.aic;
+elseif isfield(fit, 'AIC')
+    % Legacy synthetic fixture compatibility only. Signed production
+    % results are preflighted to require the canonical lowercase field.
+    value = fit.AIC;
 else
     error('summarize_mava_sequential_run:missingAIC', ...
         'Fit result %s has no stored AIC.', id);

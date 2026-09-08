@@ -79,6 +79,7 @@ try
         manifest = materialize_data_hashes(run_dir, manifest);
     else
         validate_preprocessed_data(run_dir, settings);
+        validate_materialized_records(manifest);
     end
 
     if strcmp(mode, 'dry_run')
@@ -133,7 +134,13 @@ runner_sources = { ...
     fullfile(script_dir, 'mava_alignment_shifts.m'), ...
     fullfile(script_dir, 'mava_parameter_stages.m'), ...
     fullfile(script_dir, 'mava_deterministic_start.m'), ...
-    fullfile(script_dir, 'build_mava_sequential_fit_config.m')};
+    fullfile(script_dir, 'build_mava_sequential_fit_config.m'), ...
+    fullfile(script_dir, 'summarize_mava_sequential_run.m'), ...
+    fullfile(script_dir, 'plot_mava_sequential_results.m'), ...
+    fullfile(script_dir, 'mava_boundary_diagnostics.m'), ...
+    fullfile(script_dir, 'mava_waveform_metrics.m'), ...
+    fullfile(script_dir, 'validate_mava_run_semantics.m'), ...
+    fullfile(script_dir, 'mava_seal_result_materialization.m')};
 system_listing = dir(fullfile(repo_root, 'Code', 'System', '**', '*.m'));
 system_sources = arrayfun(@(item) fullfile(item.folder, item.name), ...
     system_listing, 'UniformOutput', false);
@@ -244,12 +251,15 @@ for group_index = 1:numel(settings.alignment_groups)
                 [config_file, record, manifest] = get_or_create_config(run_dir, ...
                     group.policy, genotype, stage, restart, inherited, ...
                     settings, is_resume, manifest);
-                if is_resume && result_is_complete(record)
+                index = find_inventory_index(manifest, group.policy, ...
+                    genotype, stage.id, restart);
+                if is_resume && result_is_complete(manifest, index)
                     continue;
                 end
-                execute_one_fit(config_file, record);
+                manifest = execute_one_fit(run_dir, manifest, ...
+                    config_file, record);
             end
-            previous_best = best_stage_coordinates(run_dir, group.policy, ...
+            previous_best = best_stage_coordinates(manifest, group.policy, ...
                 genotype, stage, restart_count);
         end
     end
@@ -279,6 +289,8 @@ record = struct('alignment_policy', policy, 'genotype', genotype, ...
     'result_dir', result_dir, 'parameter_names', {stage.parameters});
 validate_manifest_config_hash(manifest, record);
 validate_existing_config(config_file, stage, restart, previous_best, settings);
+index = find_inventory_index(manifest, policy, genotype, stage.id, restart);
+validate_mava_run_semantics(manifest, index, 'optional');
 end
 
 function validate_existing_config(config_file, stage, restart, ...
@@ -306,7 +318,7 @@ if ~isequal(names, stage.parameters) || ...
 end
 end
 
-function execute_one_fit(config_file, record)
+function manifest = execute_one_fit(run_dir, manifest, config_file, record)
 write_result_status(record, 'running', struct);
 try
     loaded = loadjson(config_file);
@@ -324,6 +336,11 @@ try
     end
     details = struct('artifact_hashes', artifact_hashes(record.result_dir));
     write_result_status(record, 'complete', details);
+    index = find_inventory_index(manifest, record.alignment_policy, ...
+        record.genotype, record.stage, record.restart);
+    hashes = validate_mava_run_semantics(manifest, index, 'unsigned');
+    manifest = mava_seal_result_materialization( ...
+        run_dir, manifest, index, hashes{1});
 catch ME
     details = struct('identifier', ME.identifier, 'message', ME.message);
     write_result_status(record, 'failed', details);
@@ -331,63 +348,31 @@ catch ME
 end
 end
 
-function complete = result_is_complete(record)
-complete = false;
-required = required_result_files(record.result_dir);
-if ~all(cellfun(@isfile, required))
-    return;
-end
-try
-    model = loadjson(required{1});
-    best = loadjson(required{2});
-    fit = loadjson(required{3});
-    status = loadjson(required{4});
-    if ~isfield(model, 'MyoSim_model') || ...
-            ~isfield(best, 'MyoSim_optimization') || ...
-            ~isfield(fit, 'best_error') || ...
-            ~isfield(status, 'status') || ~strcmp(status.status, 'complete') || ...
-            ~strcmp(status.alignment_policy, record.alignment_policy) || ...
-            ~strcmp(status.genotype, record.genotype) || ...
-            ~strcmp(status.stage, record.stage) || ...
-            status.restart ~= record.restart || ...
-            ~isfield(status, 'artifact_hashes') || ...
-            ~isfield(status, 'config_sha256') || ...
-            ~strcmp(status.config_sha256, mava_sha256(record.config_file))
-        return;
-    end
-    actual = artifact_hashes(record.result_dir);
-    names = fieldnames(actual);
-    for i = 1:numel(names)
-        if ~strcmp(actual.(names{i}), status.artifact_hashes.(names{i}))
-            return;
-        end
-    end
-    complete = true;
-catch
-    complete = false;
+function complete = result_is_complete(manifest, index)
+entry = manifest.materialization.results{index};
+fields = {'model_best_sha256','best_optimization_sha256', ...
+    'fit_results_sha256','status_sha256'};
+complete = all(cellfun(@(name) ~isempty(entry.(name)), fields));
+if complete
+    validate_mava_run_semantics(manifest, index, 'signed');
 end
 end
 
-function coordinates = best_stage_coordinates(run_dir, policy, genotype, ...
+function coordinates = best_stage_coordinates(manifest, policy, genotype, ...
     stage, restart_count)
 best_error = inf;
 best_file = '';
 for restart = 1:restart_count
-    result_dir = fullfile(run_dir, 'results', policy, genotype, stage.id, ...
-        sprintf('s%02d', restart));
-    config_file = fullfile(run_dir, 'configs', ...
-        sprintf('%s__%s__%s__s%02d.json', policy, genotype, ...
-        stage.id, restart));
-    record = struct('alignment_policy', policy, 'genotype', genotype, ...
-        'stage', stage.id, 'restart', restart, ...
-        'config_file', config_file, 'result_dir', result_dir);
-    if ~result_is_complete(record)
+    index = find_inventory_index(manifest, policy, genotype, ...
+        stage.id, restart);
+    item = manifest.inventory{index};
+    if ~result_is_complete(manifest, index)
         continue;
     end
-    fit = loadjson(fullfile(result_dir, 'fit_results.json'));
+    fit = loadjson(fullfile(item.result_dir, 'fit_results.json'));
     if fit.best_error < best_error
         best_error = fit.best_error;
-        best_file = fullfile(result_dir, 'best_optimization.json');
+        best_file = fullfile(item.result_dir, 'best_optimization.json');
     end
 end
 if isempty(best_file)
@@ -396,6 +381,14 @@ if isempty(best_file)
 end
 best = loadjson(best_file).MyoSim_optimization;
 coordinates = cellfun(@(x) x.p_value, best.parameter);
+end
+
+function validate_materialized_records(manifest)
+configs = manifest.materialization.configs;
+indices = find(cellfun(@(entry) ~isempty(entry.sha256), configs));
+if ~isempty(indices)
+    validate_mava_run_semantics(manifest, indices, 'optional');
+end
 end
 
 function files = required_result_files(result_dir)
@@ -559,6 +552,7 @@ manifest.materialization.optional_final_restart_groups = selected_ids;
 manifest.materialization.optional_final_restart_decisions = groups;
 manifest.materialization.adaptive_restart_decision.sha256 = ...
     mava_sha256(decision_path);
+manifest.records_planned = active_record_count(manifest);
 manifest = seal_and_write_manifest(run_dir, manifest);
 end
 
@@ -566,11 +560,7 @@ function assert_base_results_complete(manifest)
 for i = 1:numel(manifest.inventory)
     item = manifest.inventory{i};
     if ~item.required, continue; end
-    record = struct('alignment_policy', item.alignment_policy, ...
-        'genotype', item.genotype, 'stage', item.stage, ...
-        'restart', item.restart, 'config_file', item.config_file, ...
-        'result_dir', item.result_dir);
-    if ~result_is_complete(record)
+    if ~result_is_complete(manifest, i)
         error('run_mava_sequential_analysis:adaptiveBaseIncomplete', ...
             'Base result is incomplete or hash-invalid: %s.', item.id);
     end
@@ -608,11 +598,7 @@ for i = 1:numel(manifest.inventory)
     active = item.required || group_has_optional_restarts(manifest, ...
         item.alignment_policy, item.genotype);
     if ~active, continue; end
-    record = struct('alignment_policy', item.alignment_policy, ...
-        'genotype', item.genotype, 'stage', item.stage, ...
-        'restart', item.restart, 'config_file', item.config_file, ...
-        'result_dir', item.result_dir);
-    if ~result_is_complete(record)
+    if ~result_is_complete(manifest, i)
         error('run_mava_sequential_analysis:runNotSummarizable', ...
             'Active result is incomplete or hash-invalid: %s.', item.id);
     end
