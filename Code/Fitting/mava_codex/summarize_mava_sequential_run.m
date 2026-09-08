@@ -30,6 +30,14 @@ for i = 1:numel(inventory)
 end
 if ~fixture_mode
     validate_mava_run_semantics(manifest, find(active), 'signed');
+    if ~strcmp(char(string(manifest.materialization.summary.state)), 'none')
+        mava_validate_summary_materialization(manifest);
+        summary = load_bound_summary(manifest);
+        if strcmp(char(string(manifest.materialization.summary.state)), 'final')
+            mava_publish_authoritative_run(run_dir, manifest);
+        end
+        return;
+    end
 end
 details = repmat(empty_detail(), 1, sum(active));
 detail_index = 0;
@@ -39,7 +47,7 @@ for i = find(active)
 end
 
 restart = restart_table(details);
-restart = add_group_aic(restart);
+restart = add_within_stage_aic(restart);
 [stage, identifiability] = stage_tables(manifest, restart, details);
 boundary = boundary_table(details);
 waveform = waveform_table(details);
@@ -47,20 +55,57 @@ experimental = experimental_table(manifest);
 
 tables_dir = fullfile(run_dir, 'tables');
 if ~isfolder(tables_dir), mkdir(tables_dir); end
-writetable(restart, fullfile(tables_dir, 'restart_summary.csv'));
-writetable(stage, fullfile(tables_dir, 'stage_summary.csv'));
-writetable(boundary, fullfile(tables_dir, 'boundary_diagnostics.csv'));
-writetable(waveform, fullfile(tables_dir, 'waveform_metrics.csv'));
-writetable(identifiability, ...
+write_table_atomic(restart, fullfile(tables_dir, 'restart_summary.csv'));
+write_table_atomic(stage, fullfile(tables_dir, 'stage_summary.csv'));
+write_table_atomic(boundary, fullfile(tables_dir, 'boundary_diagnostics.csv'));
+write_table_atomic(waveform, fullfile(tables_dir, 'waveform_metrics.csv'));
+write_table_atomic(identifiability, ...
     fullfile(tables_dir, 'identifiability_summary.csv'));
 
+figure_labels = evidence_labels(stage, restart, identifiability);
 summary = struct('restart', restart, 'stage', stage, ...
     'boundary', boundary, 'waveform', waveform, ...
     'identifiability', identifiability, 'experimental', experimental, ...
-    'plot_data', {details});
+    'figure_labels', figure_labels, 'plot_data', {details});
 write_adaptive_decision(run_dir, manifest, summary);
 plot_mava_sequential_results(run_dir, summary);
-write_authority_note(run_dir, manifest);
+write_authority_note(run_dir, manifest, summary);
+if ~fixture_mode
+    decision = loadjson(fullfile(tables_dir, ...
+        'adaptive_restart_decision.json'));
+    selected = manifest.materialization.optional_final_restart_groups;
+    if decision_is_true(decision) && isempty(selected)
+        summary_state = 'provisional_optional_requested';
+    else
+        summary_state = 'final';
+    end
+    manifest = mava_seal_summary_materialization( ...
+        run_dir, manifest, summary_state);
+    manifest = mava_run_manifest(run_dir, settings, 'summarize');
+    mava_validate_summary_materialization(manifest);
+    if strcmp(summary_state, 'final')
+        mava_publish_authoritative_run(run_dir, manifest);
+    end
+end
+end
+
+function summary = load_bound_summary(manifest)
+run_dir = char(string(manifest.run_dir));
+summary = struct;
+summary.restart = readtable(fullfile(run_dir,'tables','restart_summary.csv'), ...
+    'TextType','string');
+summary.stage = readtable(fullfile(run_dir,'tables','stage_summary.csv'), ...
+    'TextType','string');
+summary.boundary = readtable(fullfile(run_dir,'tables', ...
+    'boundary_diagnostics.csv'),'TextType','string');
+summary.waveform = readtable(fullfile(run_dir,'tables','waveform_metrics.csv'), ...
+    'TextType','string');
+summary.identifiability = readtable(fullfile(run_dir,'tables', ...
+    'identifiability_summary.csv'),'TextType','string');
+summary.experimental = experimental_table(manifest);
+summary.figure_labels = evidence_labels(summary.stage, summary.restart, ...
+    summary.identifiability);
+summary.plot_data = struct([]);
 end
 
 function detail = empty_detail
@@ -141,7 +186,7 @@ for i = 1:n
     best_error(i) = required_numeric(item.fit, 'best_error', item.id);
     AIC(i) = fit_aic(item.fit, item.id);
     exitflag(i) = optional_numeric(item.fit, 'exitflag');
-    converged(i) = isnan(exitflag(i)) || exitflag(i) > 0;
+    converged(i) = isfinite(exitflag(i)) && exitflag(i) > 0;
     n_free_params(i) = optional_numeric(item.fit, 'n_free_params');
     if isnan(n_free_params(i)), n_free_params(i) = numel(item.parameters); end
     iterations(i) = optional_numeric(item.fit, 'iterations');
@@ -156,16 +201,16 @@ restart = table(id, group_id, alignment_policy, genotype, stage, ...
     'exitflag','iterations','func_count','boundary_hit'});
 end
 
-function restart = add_group_aic(restart)
-restart.delta_AIC = nan(height(restart),1);
-restart.akaike_weight = nan(height(restart),1);
-groups = unique(restart.group_id, 'stable');
-for i = 1:numel(groups)
-    rows = restart.group_id == groups(i);
-    delta = restart.AIC(rows) - min(restart.AIC(rows));
-    weight = exp(-0.5*delta);
-    restart.delta_AIC(rows) = delta;
-    restart.akaike_weight(rows) = weight/sum(weight);
+function restart = add_within_stage_aic(restart)
+restart.within_stage_delta_AIC = nan(height(restart),1);
+keys = unique(restart.group_id + "__" + restart.stage, 'stable');
+for i = 1:numel(keys)
+    rows = restart.group_id + "__" + restart.stage == keys(i);
+    eligible = rows & restart.completed & restart.converged;
+    if any(eligible)
+        restart.within_stage_delta_AIC(eligible) = ...
+            restart.AIC(eligible) - min(restart.AIC(eligible));
+    end
 end
 end
 
@@ -184,7 +229,20 @@ for g = 1:numel(group_ids)
         stage_count = stage_count + 1;
         stage_aic = restart.AIC(rows);
         stage_error = restart.best_error(rows);
-        near = stage_aic-min(stage_aic) <= 2;
+        stage_converged = restart.converged(rows);
+        local_rows = find(rows);
+        if any(stage_converged)
+            converged_local = find(stage_converged);
+            [~, selected] = min(stage_aic(stage_converged));
+            representative_local = converged_local(selected);
+            defensible = true;
+        else
+            [~, representative_local] = min(stage_aic);
+            defensible = false;
+        end
+        representative_row = local_rows(representative_local);
+        near = stage_converged & ...
+            restart.within_stage_delta_AIC(rows) <= 2;
         group_details = details(rows_from_restart(restart, rows, details));
         P = normalized_matrix(group_details);
         near_P = P(near,:);
@@ -195,10 +253,15 @@ for g = 1:numel(group_ids)
         stage_rows(stage_count).stage = string(stage_ids{s});
         stage_rows(stage_count).completed_starts = sum(restart.completed(rows));
         stage_rows(stage_count).converged_starts = sum(restart.converged(rows));
-        stage_rows(stage_count).best_error = min(stage_error);
+        stage_rows(stage_count).representative_id = ...
+            restart.id(representative_row);
+        stage_rows(stage_count).representative_restart = ...
+            restart.restart(representative_row);
+        stage_rows(stage_count).defensible = defensible;
+        stage_rows(stage_count).best_error = stage_error(representative_local);
         stage_rows(stage_count).median_error = median(stage_error);
         stage_rows(stage_count).worst_error = max(stage_error);
-        stage_rows(stage_count).best_AIC = min(stage_aic);
+        stage_rows(stage_count).best_AIC = stage_aic(representative_local);
         stage_rows(stage_count).near_optimal_starts = sum(near);
         stage_rows(stage_count).solution_clusters = cluster_count(near_P);
 
@@ -230,6 +293,10 @@ for g = 1:numel(group_ids)
             ident_rows(ident_count).stage = string(stage_ids{s});
             ident_rows(ident_count).parameter = string(names{p});
             ident_rows(ident_count).completed_starts = size(P,1);
+            ident_rows(ident_count).converged_starts = sum(stage_converged);
+            ident_rows(ident_count).best_error = min(stage_error);
+            ident_rows(ident_count).median_error = median(stage_error);
+            ident_rows(ident_count).worst_error = max(stage_error);
             ident_rows(ident_count).near_optimal_starts = sum(near);
             ident_rows(ident_count).solution_clusters = cluster_count(near_P);
             ident_rows(ident_count).log10_spread_all = all_log_spread;
@@ -251,6 +318,53 @@ for g = 1:numel(group_ids)
     stage_table.delta_AIC(rows) = delta;
     stage_table.akaike_weight(rows) = weight/sum(weight);
 end
+end
+
+function labels = evidence_labels(stage, restart, ident)
+groups = unique(stage.group_id, 'stable');
+group_id = strings(numel(groups),1);
+k123_label = strings(numel(groups),1);
+best_stage = strings(numel(groups),1);
+best_stage_label = strings(numel(groups),1);
+identifiability_label = strings(numel(groups),1);
+for g = 1:numel(groups)
+    group_id(g) = groups(g);
+    krow = stage.group_id == groups(g) & stage.stage == "k123";
+    krestarts = restart.group_id == groups(g) & restart.stage == "k123";
+    k123_label(g) = sprintf(['k123 observed: %d/%d converged; ' ...
+        '%d boundary-affected starts; stage delta AIC %.3g'], ...
+        stage.converged_starts(krow), stage.completed_starts(krow), ...
+        sum(restart.boundary_hit(krestarts)), stage.delta_AIC(krow));
+
+    candidates = stage.group_id == groups(g) & stage.defensible;
+    if any(candidates)
+        candidate_rows = find(candidates);
+        [~, local] = min(stage.best_AIC(candidates));
+        selected = candidate_rows(local);
+        best_stage(g) = stage.stage(selected);
+        best_stage_label(g) = sprintf( ...
+            'Best defensible stage: %s (weight %.3f; %d/%d converged)', ...
+            stage.stage(selected), stage.akaike_weight(selected), ...
+            stage.converged_starts(selected), stage.completed_starts(selected));
+        irows = ident.group_id == groups(g) & ...
+            ident.stage == stage.stage(selected);
+        classes = string(ident.classification(irows));
+        identifiability_label(g) = sprintf([ ...
+            'Practical identifiability: %d stable, %d weak, %d non-identifiable; ' ...
+            '%d near-optimal starts; %d clusters'], ...
+            sum(classes == "stable"), sum(classes == "weak"), ...
+            sum(classes == "non-identifiable"), ...
+            stage.near_optimal_starts(selected), ...
+            stage.solution_clusters(selected));
+    else
+        best_stage(g) = "";
+        best_stage_label(g) = "No defensible stage: no converged restart";
+        identifiability_label(g) = ...
+            "Practical identifiability: insufficient converged evidence";
+    end
+end
+labels = table(group_id, k123_label, best_stage, best_stage_label, ...
+    identifiability_label);
 end
 
 function boundary = boundary_table(details)
@@ -275,12 +389,18 @@ n = numel(details);
 id = strings(n,1); group_id = strings(n,1); alignment_policy = strings(n,1);
 genotype = strings(n,1); stage = strings(n,1); restart = nan(n,1);
 target_peak = nan(n,1); target_force_rise_time = nan(n,1);
-target_calcium_to_force_lag = nan(n,1); target_time_to_peak = nan(n,1);
+target_calcium_to_force_lag = nan(n,1);
+target_time_to_peak_argmax = nan(n,1);
+target_time_to_peak_centroid = nan(n,1);
 target_relax_half_time = nan(n,1); target_fwhm = nan(n,1);
+target_normalized_rmse = zeros(n,1);
 model_peak = nan(n,1); model_force_rise_time = nan(n,1);
-model_calcium_to_force_lag = nan(n,1); model_time_to_peak = nan(n,1);
+model_relative_peak_error_signed = nan(n,1);
+model_calcium_to_force_lag = nan(n,1);
+model_time_to_peak_argmax = nan(n,1);
+model_time_to_peak_centroid = nan(n,1);
 model_relax_half_time = nan(n,1); model_fwhm = nan(n,1);
-normalized_rmse = nan(n,1);
+model_normalized_rmse = nan(n,1);
 for i = 1:n
     a = details(i).target_metrics; b = details(i).model_metrics;
     id(i)=details(i).id; group_id(i)=details(i).group_id;
@@ -288,19 +408,25 @@ for i = 1:n
     stage(i)=details(i).stage; restart(i)=details(i).restart;
     target_peak(i)=a.peak; target_force_rise_time(i)=a.force_rise_time;
     target_calcium_to_force_lag(i)=a.calcium_to_force_lag;
-    target_time_to_peak(i)=a.time_to_peak_argmax;
+    target_time_to_peak_argmax(i)=a.time_to_peak_argmax;
+    target_time_to_peak_centroid(i)=a.time_to_peak_centroid;
     target_relax_half_time(i)=a.relax_half_time; target_fwhm(i)=a.fwhm;
     model_peak(i)=b.peak; model_force_rise_time(i)=b.force_rise_time;
+    model_relative_peak_error_signed(i)=b.relative_peak_error_signed;
     model_calcium_to_force_lag(i)=b.calcium_to_force_lag;
-    model_time_to_peak(i)=b.time_to_peak_argmax;
+    model_time_to_peak_argmax(i)=b.time_to_peak_argmax;
+    model_time_to_peak_centroid(i)=b.time_to_peak_centroid;
     model_relax_half_time(i)=b.relax_half_time; model_fwhm(i)=b.fwhm;
-    normalized_rmse(i)=b.normalized_rmse;
+    model_normalized_rmse(i)=b.normalized_rmse;
 end
 waveform = table(id,group_id,alignment_policy,genotype,stage,restart, ...
     target_peak,target_force_rise_time,target_calcium_to_force_lag, ...
-    target_time_to_peak,target_relax_half_time,target_fwhm,model_peak, ...
-    model_force_rise_time,model_calcium_to_force_lag,model_time_to_peak, ...
-    model_relax_half_time,model_fwhm,normalized_rmse);
+    target_time_to_peak_argmax,target_time_to_peak_centroid, ...
+    target_relax_half_time,target_fwhm,target_normalized_rmse,model_peak, ...
+    model_relative_peak_error_signed,model_force_rise_time, ...
+    model_calcium_to_force_lag,model_time_to_peak_argmax, ...
+    model_time_to_peak_centroid,model_relax_half_time,model_fwhm, ...
+    model_normalized_rmse);
 end
 
 function experimental = experimental_table(manifest)
@@ -367,9 +493,9 @@ for g = 1:numel(group_ids)
     end
     final_restart = summary.restart.group_id == group_id & ...
         summary.restart.stage == "plus_k73";
-    final_rows = find(final_restart);
-    [~, best_local] = min(summary.restart.AIC(final_restart));
-    if summary.restart.boundary_hit(final_rows(best_local))
+    representative = final_restart & ...
+        summary.restart.id == row.representative_id;
+    if any(representative) && summary.restart.boundary_hit(representative)
         reasons(end+1) = "boundary hit in best run"; %#ok<AGROW>
     end
     ident_rows = summary.identifiability.group_id == group_id & ...
@@ -389,10 +515,12 @@ decision = struct('schema_version', 1, 'activate', ~isempty(groups), ...
 write_json_atomic(decision_path, decision);
 end
 
-function write_authority_note(run_dir, manifest)
+function write_authority_note(run_dir, manifest, summary)
 manifest_file = fullfile(run_dir, 'manifest.json');
 note_file = fullfile(run_dir, 'AUTHORITATIVE_OUTPUTS.md');
-fid = fopen(note_file, 'w');
+temporary = [tempname(run_dir) '.md'];
+temporary_cleanup = onCleanup(@() delete_if_present(temporary));
+fid = fopen(temporary, 'w');
 if fid < 0
     error('summarize_mava_sequential_run:writeFailed', ...
         'Could not write %s.', note_file);
@@ -401,7 +529,12 @@ cleanup = onCleanup(@() fclose(fid));
 fprintf(fid, '# Authoritative mavacamten analysis outputs\n\n');
 fprintf(fid, '- Run ID: `%s`\n', char(string(manifest.run_id)));
 fprintf(fid, '- Repository HEAD: `%s`\n', char(string(manifest.repository_head)));
-fprintf(fid, '- Manifest SHA-256: `%s`\n', mava_sha256(manifest_file));
+if isfield(manifest, 'input_signature')
+    fprintf(fid, '- Manifest SHA-256 input identity: `%s`\n', ...
+        char(string(manifest.input_signature)));
+else
+    fprintf(fid, '- Manifest SHA-256: `%s`\n', mava_sha256(manifest_file));
+end
 if isfield(manifest, 'immutable_signature')
     fprintf(fid, '- Run immutable hash: `%s`\n', ...
         char(string(manifest.immutable_signature)));
@@ -411,6 +544,17 @@ end
 fprintf(fid, '- Manifest: `%s`\n', manifest_file);
 fprintf(fid, '- Tables: `%s`\n', fullfile(run_dir, 'tables'));
 fprintf(fid, '- Figures: `%s`\n\n', fullfile(run_dir, 'figures'));
+artifacts = mava_summary_artifact_inventory(run_dir);
+fprintf(fid, '## Authoritative artifact hashes\n\n');
+for i = 1:numel(artifacts)
+    if strcmp(artifacts{i}.id, 'authority_note') || ...
+            ~isfile(artifacts{i}.path)
+        continue;
+    end
+    fprintf(fid, '- `%s`: `%s`\n', artifacts{i}.path, ...
+        mava_sha256(artifacts{i}.path));
+end
+fprintf(fid, '\n');
 fprintf(fid, ['AIC and Akaike weights are comparable only within the same ' ...
     'genotype and alignment policy. They must not be compared across ' ...
     'genotypes or alignment policies.\n\n']);
@@ -420,18 +564,70 @@ fprintf(fid, ['The identifiability labels are practical identifiability ' ...
     'diagnostics from this multistart ensemble, not proof of structural ' ...
     'identifiability.\n\n']);
 fprintf(fid, ['Control parameter and treatment-timing conclusions are ' ...
-    'provisional because shared alignment preserves an approximately 192 ms ' ...
-    'later acute contraction onset and the workbook has no stimulus timing ' ...
-    'metadata.\n\n']);
-fprintf(fid, ['The verified acute peak-force effect is approximately 35%% of ' ...
-    'Before in Control and 33%% of Before in H251N.\n\n']);
+    'provisional because the workbook has no stimulus timing metadata.\n\n']);
+acute = contains(lower(string(summary.experimental.id)), 'acute');
+for i = find(acute)'
+    fprintf(fid, '- Computed acute peak-force ratio for `%s`: %.1f%% of Before.\n', ...
+        summary.experimental.group_id(i), ...
+        100*summary.experimental.peak_ratio_to_before(i));
+end
+fprintf(fid, '\n');
+control_shared = summary.experimental.group_id == ...
+    "shared_by_genotype__Control";
+before = control_shared & contains(lower(string(summary.experimental.id)), ...
+    'before');
+acute_control = control_shared & contains( ...
+    lower(string(summary.experimental.id)), 'acute');
+timing_ms = NaN;
+if sum(before) == 1 && sum(acute_control) == 1 && ...
+        ismember('calcium_to_force_lag', ...
+        summary.experimental.Properties.VariableNames)
+    timing_ms = 1000*(summary.experimental.calcium_to_force_lag(acute_control) - ...
+        summary.experimental.calcium_to_force_lag(before));
+end
+for i = 1:height(summary.figure_labels)
+    fprintf(fid, '- `%s`: %s; %s; %s.\n', ...
+        summary.figure_labels.group_id(i), ...
+        summary.figure_labels.k123_label(i), ...
+        summary.figure_labels.best_stage_label(i), ...
+        summary.figure_labels.identifiability_label(i));
+end
+[improvement, improvement_text] = largest_stage_improvement(summary.stage);
+fprintf(fid, ['\nLargest observed consecutive stage-level AIC improvement: ' ...
+    '%.3g (%s).\n\n'], improvement, improvement_text);
 fprintf(fid, ['Question for the PI: Are the six Mava traces synchronized to ' ...
     'the same electrical or calcium stimulus time? Does the first column ' ...
     'represent a common absolute stimulus time, or could each averaged trace ' ...
-    'have an arbitrary temporal offset? The Control acute trace begins about ' ...
-    '192 ms later than Control before. Should I preserve that difference, or ' ...
+    'have an arbitrary temporal offset? The signed shared-Control metrics ' ...
+    'place acute rise-lag %.0f ms later than Before. Should I preserve that ' ...
+    'difference, or ' ...
     'independently align each trace''s contraction onset to the calcium ' ...
-    'transient?\n']);
+    'transient?\n'], timing_ms);
+clear cleanup;
+[ok,message] = movefile(temporary,note_file,'f');
+if ~ok
+    error('summarize_mava_sequential_run:writeFailed', ...
+        'Could not publish %s: %s', note_file, message);
+end
+clear temporary_cleanup;
+end
+
+function [best_improvement, description] = largest_stage_improvement(stage)
+best_improvement = -Inf;
+description = 'no consecutive stages available';
+groups = unique(stage.group_id, 'stable');
+for g = 1:numel(groups)
+    rows = find(stage.group_id == groups(g));
+    for i = 2:numel(rows)
+        improvement = stage.best_AIC(rows(i-1)) - stage.best_AIC(rows(i));
+        if improvement > best_improvement
+            best_improvement = improvement;
+            description = sprintf('%s: %s to %s', groups(g), ...
+                stage.stage(rows(i-1)), stage.stage(rows(i)));
+        end
+    end
+end
+if ~isfinite(best_improvement), best_improvement = NaN; end
 end
 
 function validate_production_manifest(manifest)
@@ -580,7 +776,7 @@ end
 end
 
 function spread = log_spread(values)
-if isempty(values)
+if isempty(values) || any(~isfinite(values)) || any(values <= 0)
     spread = Inf;
 else
     spread = max(log10(values))-min(log10(values));
@@ -588,7 +784,7 @@ end
 end
 
 function spread = fold_spread(values)
-if isempty(values)
+if isempty(values) || any(~isfinite(values)) || any(values <= 0)
     spread = Inf;
 else
     spread = max(values)/min(values);
@@ -657,7 +853,31 @@ end
 file_cleanup = onCleanup(@() fclose(fid));
 fprintf(fid, '%s', jsonencode(value));
 clear file_cleanup;
-movefile(temporary, file, 'f');
+[ok,message] = movefile(temporary, file, 'f');
+if ~ok
+    error('summarize_mava_sequential_run:writeFailed', ...
+        'Could not publish %s: %s',file,message);
+end
+end
+
+function write_table_atomic(value, file)
+parent = fileparts(file);
+if ~isfolder(parent), mkdir(parent); end
+temporary = [tempname(parent) '.csv'];
+cleanup = onCleanup(@() delete_if_present(temporary));
+writetable(value, temporary);
+[ok,message] = movefile(temporary,file,'f');
+if ~ok
+    error('summarize_mava_sequential_run:writeFailed', ...
+        'Could not publish %s: %s',file,message);
+end
+end
+
+function tf = decision_is_true(decision)
+tf = (islogical(decision.activate) && isscalar(decision.activate) && ...
+    decision.activate) || (isnumeric(decision.activate) && ...
+    isreal(decision.activate) && isscalar(decision.activate) && ...
+    decision.activate == 1);
 end
 
 function delete_if_present(file)

@@ -1,0 +1,60 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_HCM\/temp\/best\/model_best.json",
+		"fit_mode": "fit_in_time_domain",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/shared_by_genotype\/H251N\/plus_k50\/s03",
+		"best_opt_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/shared_by_genotype\/H251N\/plus_k50\/s03\/best_optimization.json",
+		"max_fun_evals": 1200,
+		"tol_fun": 1e-05,
+		"tol_x": 0.001,
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"job": [
+			{
+				"model_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/shared_by_genotype\/H251N\/plus_k50\/s03\/model_worker.json",
+				"protocol_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/data\/shared_by_genotype\/hcm_acute_protocol.txt",
+				"options_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_HCM\/sim_input\/sim_options.json",
+				"results_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/shared_by_genotype\/H251N\/plus_k50\/s03\/twitch.myo",
+				"fit_start_index": 481,
+				"target_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/data\/shared_by_genotype\/hcm_acute_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_1",
+				"min_value": 0.2292388767,
+				"max_value": 2.229238877,
+				"p_value": 0.4852827579,
+				"p_mode": "log",
+				"p_value_raw": 0.4852827579
+			},
+			{
+				"name": "k_2",
+				"min_value": 1.229238877,
+				"max_value": 3.229238877,
+				"p_value": 0.4508247613,
+				"p_mode": "log",
+				"p_value_raw": 0.4508247613
+			},
+			{
+				"name": "k_3",
+				"min_value": 0.1951050245,
+				"max_value": 2.195105025,
+				"p_value": 0.2926076541,
+				"p_mode": "log",
+				"p_value_raw": 0.2926076541
+			},
+			{
+				"name": "k_5_0",
+				"min_value": 2.058038631,
+				"max_value": 4.058038631,
+				"p_value": 0.1980753706,
+				"p_mode": "log",
+				"p_value_raw": 0.1980753706
+			}
+		],
+		"model_working_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/shared_by_genotype\/H251N\/plus_k50\/s03\/model_worker.json",
+		"best_model_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/shared_by_genotype\/H251N\/plus_k50\/s03\/model_best.json"
+	}
+}

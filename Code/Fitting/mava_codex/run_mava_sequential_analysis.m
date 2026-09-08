@@ -3,6 +3,7 @@ function run = run_mava_sequential_analysis(run_id, mode, varargin)
 
 script_dir = fileparts(mfilename('fullpath'));
 repo_root = fileparts(fileparts(fileparts(script_dir)));
+addpath(genpath(repo_root));
 addpath(genpath(fullfile(repo_root, 'Code', 'System')));
 addpath(script_dir);
 
@@ -140,7 +141,12 @@ runner_sources = { ...
     fullfile(script_dir, 'mava_boundary_diagnostics.m'), ...
     fullfile(script_dir, 'mava_waveform_metrics.m'), ...
     fullfile(script_dir, 'validate_mava_run_semantics.m'), ...
-    fullfile(script_dir, 'mava_seal_result_materialization.m')};
+    fullfile(script_dir, 'mava_seal_result_materialization.m'), ...
+    fullfile(script_dir, 'mava_summary_artifact_inventory.m'), ...
+    fullfile(script_dir, 'mava_active_result_fingerprint.m'), ...
+    fullfile(script_dir, 'mava_validate_summary_materialization.m'), ...
+    fullfile(script_dir, 'mava_seal_summary_materialization.m'), ...
+    fullfile(script_dir, 'mava_publish_authoritative_run.m')};
 system_listing = dir(fullfile(repo_root, 'Code', 'System', '**', '*.m'));
 system_sources = arrayfun(@(item) fullfile(item.folder, item.name), ...
     system_listing, 'UniformOutput', false);
@@ -552,8 +558,22 @@ manifest.materialization.optional_final_restart_groups = selected_ids;
 manifest.materialization.optional_final_restart_decisions = groups;
 manifest.materialization.adaptive_restart_decision.sha256 = ...
     mava_sha256(decision_path);
+manifest = invalidate_summary_materialization(manifest);
 manifest.records_planned = active_record_count(manifest);
 manifest = seal_and_write_manifest(run_dir, manifest);
+end
+
+function manifest = invalidate_summary_materialization(manifest)
+if manifest.materialization.summary.published
+    error('run_mava_sequential_analysis:publishedRunImmutable', ...
+        'Published summary state cannot be invalidated for optional restarts.');
+end
+manifest.materialization.summary.state = 'none';
+manifest.materialization.summary.active_result_fingerprint = '';
+manifest.materialization.summary.published = false;
+for i = 1:numel(manifest.materialization.summary.artifacts)
+    manifest.materialization.summary.artifacts{i}.sha256 = '';
+end
 end
 
 function assert_base_results_complete(manifest)

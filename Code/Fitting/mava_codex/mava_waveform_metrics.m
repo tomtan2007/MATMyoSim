@@ -86,6 +86,7 @@ else
 m.fwhm = t(right_idx) - t(left_idx);
 end
 m.normalized_rmse = NaN;
+m.relative_peak_error_signed = NaN;
 if ~isempty(options.target)
     [first_scored, target_range] = resolve_time_fit_start_index( ...
         target, options.fit_start_index);
@@ -96,6 +97,10 @@ if ~isempty(options.target)
     end
     m.normalized_rmse = sqrt(mean( ...
         (corrected(scored)-target(scored)).^2)) / target_range;
+    target_peak = max(target(onset_idx:end));
+    if target_peak ~= 0
+        m.relative_peak_error_signed = (m.peak-target_peak)/target_peak;
+    end
 end
 m.corrected_signal = corrected;
 end

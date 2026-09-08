@@ -216,7 +216,7 @@ Paper files: `~/Downloads/PIIS0006349524003527.pdf` (Lewalle), `~/Downloads/2026
 ---
 
 ## Current Fit State
-> **Do not hardcode fit numbers here — this section goes stale fast (it's been rewritten by nearly every session since June).** For the actual latest results, check the memory index (`MEMORY.md`) for the most recent dated entry — as of this edit that's `refit_rebaseline_20260720` (baseline/params) and `jeremiah_duration_diagnostics_20260804` (open diagnostic thread), but check the index for anything newer. The most recent full narrative is the 2026-08-04 entry in the Progress Log below.
+> **Do not hardcode fit numbers here — this section goes stale fast (it's been rewritten by nearly every session since June).** For the actual latest results, check the memory index (`MEMORY.md`) for the most recent dated entry. The current source of truth is `2026-09-08 — BPS focus and Mavacamten sequential analysis`; it records both the active 48-fit analysis and the non-identifiability boundary on driver claims.
 >
 > **Known-retracted claims — do not repeat these:** "k_1 is a 5.2× (or 10.5×) HCM driver" (superseded 2026-07-20 — real ratio ~3×, redistributed across k_1/k_7_1/k_5_0, and later shown non-identifiable at 30-restart scale, memory: `identifiability_multistart_20260729`). "k_7_1 jumps ~7× ctrl→HCM" (was an unphysical-basin artifact, corrected 2026-07-14/20).
 

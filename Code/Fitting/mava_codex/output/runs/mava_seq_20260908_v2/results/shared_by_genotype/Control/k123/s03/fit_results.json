@@ -1,0 +1,15 @@
+{
+	"best_error": 0.3154681796,
+	"best_objective": 0.3154681796,
+	"n_free_params": 3,
+	"n_active_points": 1006,
+	"aic": -1154.619644,
+	"timestamp": "2026-09-08 15:05:47",
+	"exitflag": 1,
+	"iterations": 82,
+	"func_count": 151,
+	"algorithm": "Nelder-Mead simplex direct search",
+	"message": "Optimization terminated:\n the current x satisfies the termination criteria using OPTIONS.TolX of 1.000000e-03 \n and F(X) satisfies the convergence criteria using OPTIONS.TolFun of 1.000000e-05 \n",
+	"tol_fun": 1e-05,
+	"tol_x": 0.001
+}
