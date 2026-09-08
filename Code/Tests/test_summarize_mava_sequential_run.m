@@ -1,0 +1,264 @@
+function test_summarize_mava_sequential_run
+% Manifest fixtures must determine every summarized result and artifact.
+
+repo_root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+code_dir = fullfile(repo_root, 'Code', 'Fitting', 'mava_codex');
+system_dir = fullfile(repo_root, 'Code', 'System');
+addpath(genpath(system_dir));
+addpath(code_dir);
+
+run_dir = tempname;
+mkdir(run_dir);
+blocker_dir = fullfile(run_dir, 'block_simulation');
+mkdir(blocker_dir);
+write_text(fullfile(blocker_dir, 'simulation_driver.m'), ...
+    ['function varargout=simulation_driver(varargin)' newline ...
+     'error(''fixture:simulationLaunched'',''Fixture launched simulation.'');' newline ...
+     'end' newline]);
+addpath(blocker_dir, '-begin');
+cleanup = onCleanup(@() remove_fixture(run_dir, blocker_dir));
+
+manifest = build_fixture(run_dir);
+write_text(fullfile(run_dir, 'manifest.json'), jsonencode(manifest));
+
+stray_dir = fullfile(run_dir, 'results', 'historical_not_in_manifest');
+mkdir(stray_dir);
+write_text(fullfile(stray_dir, 'fixture.json'), jsonencode(struct( ...
+    'fit_results', struct('best_error', 1e-12, 'AIC', -1e9))));
+
+summary = summarize_mava_sequential_run(run_dir);
+assert(height(summary.restart) == 24, ...
+    'Summarizer must include only the 24 manifest-listed fixtures.');
+control_metrics = summary.experimental(summary.experimental.id == ...
+    "ctrl_acute" & summary.experimental.group_id == ...
+    "shared_by_genotype__Control", :);
+assert(height(control_metrics) == 1 && ...
+    abs(control_metrics.peak_ratio_to_before - 0.35) < 1e-12, ...
+    'Manifest-listed metrics must expose the acute/before force effect.');
+assert(min(summary.restart.delta_AIC) == 0, ...
+    'The minimum within-group delta AIC must be zero.');
+comparison_groups = unique(summary.restart.group_id, 'stable');
+for g = 1:numel(comparison_groups)
+    rows = summary.restart.group_id == comparison_groups(g);
+    assert(min(summary.restart.delta_AIC(rows)) == 0 && ...
+        abs(sum(summary.restart.akaike_weight(rows)) - 1) < 1e-12, ...
+        'Restart AIC values must normalize within each comparison group.');
+end
+assert(any(string(summary.boundary.classification) == "near_upper"), ...
+    'Known near-upper k_2 solution was not reported.');
+allowed = ["stable","weak","non-identifiable"];
+classes = unique(string(summary.identifiability.classification));
+assert(all(ismember(classes, allowed)) && all(ismember(allowed, classes)), ...
+    'Practical-identifiability labels must use all and only allowed values.');
+assert(all(summary.stage.completed_starts == 3), ...
+    'Each fixture stage must report its three completed starts.');
+
+table_names = {'restart_summary.csv','stage_summary.csv', ...
+    'boundary_diagnostics.csv','waveform_metrics.csv', ...
+    'identifiability_summary.csv'};
+for i = 1:numel(table_names)
+    assert(isfile(fullfile(run_dir, 'tables', table_names{i})), ...
+        'Missing required summary table %s.', table_names{i});
+end
+figure_names = {'experimental_traces_and_alignment.png', ...
+    'k123_failed_fits.png','sequential_error_aic.png', ...
+    'best_fit_waveforms.png','boundary_identifiability.png'};
+for i = 1:numel(figure_names)
+    figure_file = fullfile(run_dir, 'figures', figure_names{i});
+    assert(isfile(figure_file) && dir(figure_file).bytes > 1000, ...
+        'Missing or empty deterministic figure %s.', figure_names{i});
+end
+
+decision_file = fullfile(run_dir, 'tables', ...
+    'adaptive_restart_decision.json');
+decision = jsondecode(fileread(decision_file));
+assert(isequal(sort(fieldnames(decision)), ...
+    {'activate';'groups';'schema_version'}) && ...
+    islogical(decision.activate) && decision.activate && ...
+    decision.schema_version == 1, ...
+    'Adaptive decision must use the exact Task 5 schema and JSON boolean.');
+assert(isscalar(decision.groups) && ...
+    strcmp(decision.groups(1).id, 'shared_by_genotype__Control') && ...
+    ~isempty(strtrim(decision.groups(1).reason)), ...
+    'Final-stage fixture should select its manifest-ordered group with a reason.');
+
+authority = fileread(fullfile(run_dir, 'AUTHORITATIVE_OUTPUTS.md'));
+required_text = {'manifest SHA-256','within the same genotype and alignment', ...
+    'independently fitted `k_2`','practical identifiability', ...
+    'provisional','35%','33%','192 ms','synchronized'};
+for i = 1:numel(required_text)
+    assert(contains(authority, required_text{i}, 'IgnoreCase', true), ...
+        'Authority note omitted required wording: %s.', required_text{i});
+end
+
+decision_bytes = fileread(decision_file);
+manifest.materialization.adaptive_restart_decision.sha256 = ...
+    mava_sha256(decision_file);
+write_text(fullfile(run_dir, 'manifest.json'), jsonencode(manifest));
+first_fixture = manifest.inventory{1}.fixture_file;
+changed = jsondecode(fileread(first_fixture));
+changed.fit_results.AIC = -999;
+write_text(first_fixture, jsonencode(changed));
+summarize_mava_sequential_run(run_dir);
+assert(strcmp(fileread(decision_file), decision_bytes), ...
+    'A hash-bound adaptive decision must remain byte-identical.');
+
+tampered_dir = fullfile(run_dir, 'production_tamper');
+tampered = build_fixture(tampered_dir);
+tampered = rmfield(tampered, 'fixture_mode');
+data_item = tampered.materialization.data_files{1};
+data_item.target_sha256 = mava_sha256(data_item.target_file);
+data_item.protocol_sha256 = mava_sha256(data_item.protocol_file);
+data_item.metrics_sha256 = mava_sha256(data_item.metrics_file);
+tampered.materialization.data_files{1} = data_item;
+write_text(fullfile(tampered_dir, 'manifest.json'), jsonencode(tampered));
+writematrix(target_for_tamper(data_item.target_file) + 1, ...
+    data_item.target_file, 'Delimiter', 'tab');
+assert_throws(@() summarize_mava_sequential_run(tampered_dir), ...
+    'summarize_mava_sequential_run:dataHashMismatch', ...
+    'Production summaries must reject changed manifest-listed data.');
+
+fprintf('PASS: manifest-only Mava sequential summarizer\n');
+end
+
+function manifest = build_fixture(run_dir)
+policies = {'shared_by_genotype','independent_trace'};
+genotype = 'Control';
+t = (0:0.01:1)';
+protocol = table(0.01*ones(size(t)), 9*ones(size(t)), ...
+    'VariableNames', {'dt','pCa'});
+protocol.pCa(31:end) = 6;
+target = 100*exp(-0.5*((t-0.62)/0.10).^2);
+metrics = table(["ctrl_before";"ctrl_acute";"hcm_before";"hcm_acute"], ...
+    ["Control";"Control";"H251N";"H251N"], ...
+    [100;35;100;33], [0.06;0.208;0.05;0.07], ...
+    'VariableNames', {'id','genotype','peak_force','calcium_to_force_lag'});
+
+stages = mava_parameter_stages();
+inventory = cell(1, numel(policies)*numel(stages)*3);
+data_files = cell(1, numel(policies));
+groups = cell(1, numel(policies));
+record_index = 0;
+for policy_index = 1:numel(policies)
+    policy = policies{policy_index};
+    group_id = [policy '__' genotype];
+    data_dir = fullfile(run_dir, 'data', policy);
+    mkdir(data_dir);
+    target_file = fullfile(data_dir, 'ctrl_acute_target.txt');
+    protocol_file = fullfile(data_dir, 'ctrl_acute_protocol.txt');
+    metrics_file = fullfile(data_dir, 'experimental_metrics.csv');
+    writematrix(target, target_file, 'Delimiter', 'tab');
+    writetable(protocol, protocol_file, 'FileType', 'text', ...
+        'Delimiter', '\t');
+    writetable(metrics, metrics_file);
+    data_files{policy_index} = struct('id', group_id, ...
+        'target_file', target_file, 'protocol_file', protocol_file, ...
+        'metrics_file', metrics_file);
+    groups{policy_index} = struct('policy', policy, ...
+        'genotypes', {{genotype}});
+
+    for s = 1:numel(stages)
+        for restart = 1:3
+            record_index = record_index + 1;
+            result_dir = fullfile(run_dir, 'results', policy, genotype, ...
+                stages(s).id, sprintf('s%02d', restart));
+            mkdir(result_dir);
+            fixture_file = fullfile(result_dir, 'summary_fixture.json');
+            p = fixture_parameters(stages(s).parameters, s, restart, ...
+                policy_index);
+            if s == numel(stages)
+                if policy_index == 1
+                    stage_aic = [60 61 64];
+                else
+                    stage_aic = [160 161 162];
+                end
+            else
+                stage_aic = (110 - 10*s) + [0 1 2] + ...
+                    100*(policy_index-1);
+            end
+            model = target .* (0.70 + 0.07*s) + (restart-1)*0.5;
+            fixture = struct( ...
+                'fit_results', struct('best_error', 0.40 - 0.06*s + ...
+                    0.002*restart, 'AIC', stage_aic(restart), ...
+                    'exitflag', 1, 'iterations', 20+restart, ...
+                    'func_count', 50+restart), ...
+                'parameters', {p}, ...
+                'waveform', struct('time', t, 'target', target, ...
+                    'model', model, 'onset_index', 31, ...
+                    'calcium_onset_time', 0.30));
+            write_text(fixture_file, jsonencode(fixture));
+            record_id = sprintf('%s__%s__%s__s%02d', policy, genotype, ...
+                stages(s).id, restart);
+            inventory{record_index} = struct('id', record_id, ...
+                'alignment_policy', policy, 'genotype', genotype, ...
+                'stage', stages(s).id, 'restart', restart, 'required', 1, ...
+                'parameter_names', {stages(s).parameters}, ...
+                'result_dir', result_dir, 'fixture_file', fixture_file);
+        end
+    end
+end
+
+decision_path = fullfile(run_dir, 'tables', ...
+    'adaptive_restart_decision.json');
+manifest = struct('schema_version', 2, 'run_id', 'summary_fixture', ...
+    'run_dir', run_dir, 'repository_head', 'fixture-head', ...
+    'fixture_mode', true, 'creation_mode', 'execute', ...
+    'status', 'complete', 'groups', {groups}, ...
+    'stages', stages, 'inventory', {inventory}, ...
+    'materialization', struct( ...
+        'optional_final_restart_groups', {{}}, ...
+        'adaptive_restart_decision', struct('path', decision_path, ...
+        'sha256', ''), 'data_files', {data_files}));
+end
+
+function parameters = fixture_parameters(names, stage_index, restart, ...
+        policy_index)
+parameters = cell(1, numel(names));
+for i = 1:numel(names)
+    if strcmp(names{i}, 'k_2') && stage_index == 1
+        values = [0.99 0.97 0.96];
+    elseif strcmp(names{i}, 'k_3') && stage_index == 1 && policy_index == 1
+        values = [0.10 0.80 0.50];
+    elseif stage_index == 4 && i == 1 && policy_index == 1
+        values = [0.20 0.80 0.50];
+    else
+        if policy_index == 1
+            values = [0.50 0.52 0.48];
+        else
+            values = [0.50 0.51 0.49];
+        end
+    end
+    parameters{i} = struct('name', names{i}, 'min_value', -1, ...
+        'max_value', 1, 'p_value', values(restart), ...
+        'p_value_raw', values(restart), 'p_mode', 'log');
+end
+end
+
+function write_text(file, value)
+parent = fileparts(file);
+if ~isfolder(parent), mkdir(parent); end
+fid = fopen(file, 'w');
+assert(fid >= 0, 'Could not write fixture file %s.', file);
+cleanup = onCleanup(@() fclose(fid));
+fprintf(fid, '%s', value);
+end
+
+function values = target_for_tamper(file)
+values = readmatrix(file);
+end
+
+function assert_throws(f, identifier, message)
+try
+    f();
+catch ME
+    assert(strcmp(ME.identifier, identifier), ...
+        '%s Expected %s, got %s.', message, identifier, ME.identifier);
+    return;
+end
+error('test_summarize_mava_sequential_run:noError', '%s', message);
+end
+
+function remove_fixture(run_dir, blocker_dir)
+if contains(path, blocker_dir), rmpath(blocker_dir); end
+if isfolder(run_dir), rmdir(run_dir, 's'); end
+end
