@@ -2,6 +2,7 @@ function test_mava_waveform_metrics
 % Pre-zeroed experimental targets must not be baseline-subtracted twice.
 
 repo_root = fullfile(fileparts(mfilename('fullpath')), '..', '..');
+addpath(genpath(fullfile(repo_root, 'Code', 'System')));
 addpath(fullfile(repo_root, 'Code', 'Fitting', 'mava_codex'));
 
 t = (0:0.001:1)';
@@ -49,6 +50,25 @@ peak_pair = mava_waveform_metrics(peak_pair_t, peak_pair_y, 2, ...
 assert(abs(peak_pair.force_rise_time - 0.02) < 1e-12, ...
     ['The sustained-rise pair may end at the peak sample; the first ' ...
     'qualifying sample is still the rise time.']);
+
+% An initialization ramp distinguishes the required late-half mean from
+% both the all-history median and the legacy last-50 reporting baseline.
+ramp_t = (0:0.001:0.011)';
+ramp_model = (100:10:210)';
+ramp_target = [zeros(9, 1); 30; 20; 10];
+ramp_start = 9;
+ramp_sim.muscle_force = ramp_model;
+[fit_error, ~, fit_aligned] = evaluate_time_fit(ramp_sim, ramp_target, ...
+    'fit_start_index', ramp_start);
+ramp_metrics = mava_waveform_metrics(ramp_t, ramp_model, ramp_start, ...
+    'model', 'target', ramp_target, 'fit_start_index', ramp_start);
+expected_aligned = (-50:10:60)';
+assert(max(abs(fit_aligned - expected_aligned)) < 1e-12, ...
+    'Fitting must align with the mean of passive samples 4:8.');
+assert(max(abs(ramp_metrics.corrected_signal - expected_aligned)) < 1e-12, ...
+    'Reporting and fitting must expose the identical aligned waveform.');
+assert(abs(sqrt(fit_error) - ramp_metrics.normalized_rmse) < 1e-12, ...
+    'Reported normalized RMSE must be the square root of fitting MSE.');
 
 fprintf('PASS: mavacamten waveform metrics\n');
 end

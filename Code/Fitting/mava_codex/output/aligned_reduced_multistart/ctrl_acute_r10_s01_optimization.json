@@ -1,0 +1,60 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_control\/temp\/best\/model_best.json",
+		"fit_mode": "fit_in_time_domain",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/aligned_reduced_multistart\/results\/ctrl_acute_r10_s01",
+		"best_opt_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/aligned_reduced_multistart\/results\/ctrl_acute_r10_s01\/best_optimization.json",
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"max_fun_evals": 1200,
+		"k_2_k_1_ratio": 10,
+		"job": [
+			{
+				"model_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/aligned_reduced_multistart\/results\/ctrl_acute_r10_s01\/model_worker.json",
+				"protocol_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/aligned_reduced_multistart\/data\/ctrl_acute_protocol.txt",
+				"options_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_control\/sim_input\/sim_options.json",
+				"results_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/aligned_reduced_multistart\/results\/ctrl_acute_r10_s01\/twitch.myo",
+				"fit_start_index": 481,
+				"target_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/aligned_reduced_multistart\/data\/ctrl_acute_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_1",
+				"min_value": -0.2513654997,
+				"max_value": 1.7486345,
+				"p_value": 0.2,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_3",
+				"min_value": 0.4003946399,
+				"max_value": 2.40039464,
+				"p_value": 0.4485281374,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_5_0",
+				"min_value": 1.381162029,
+				"max_value": 3.381162029,
+				"p_value": 0.6970562748,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_4_0",
+				"min_value": 0.7152359693,
+				"max_value": 2.715235969,
+				"p_value": 0.3455844123,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_7_3",
+				"min_value": -0.09114839832,
+				"max_value": 1.908851602,
+				"p_value": 0.5941125497,
+				"p_mode": "log"
+			}
+		]
+	}
+}

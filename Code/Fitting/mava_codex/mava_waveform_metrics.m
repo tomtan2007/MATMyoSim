@@ -15,13 +15,23 @@ end
 if onset_idx < 2 || onset_idx > numel(y)
     error('mava_waveform_metrics:badOnset', 'Invalid onset index.');
 end
+target = options.target(:);
+if ~isempty(target) && numel(target) ~= numel(y)
+    error('mava_waveform_metrics:targetLengthMismatch', ...
+        'Target and signal lengths differ.');
+end
 
 switch baseline_mode
     case 'prezeroed'
         corrected = y;
     case 'model'
-        pre = max(1, onset_idx-50):(onset_idx-1);
-        corrected = y - mean(y(pre));
+        if isempty(target)
+            baseline_target = zeros(size(y));
+        else
+            baseline_target = target;
+        end
+        corrected = align_time_fit_baseline( ...
+            y, baseline_target, options.fit_start_index);
     otherwise
         error('mava_waveform_metrics:badBaselineMode', ...
             'Unknown baseline mode: %s', baseline_mode);
@@ -77,11 +87,6 @@ m.fwhm = t(right_idx) - t(left_idx);
 end
 m.normalized_rmse = NaN;
 if ~isempty(options.target)
-    target = options.target(:);
-    if numel(target) ~= numel(corrected)
-        error('mava_waveform_metrics:targetLengthMismatch', ...
-            'Target and signal lengths differ.');
-    end
     first_scored = round(options.fit_start_index);
     if ~isscalar(first_scored) || first_scored < 1 || ...
             first_scored > numel(target)

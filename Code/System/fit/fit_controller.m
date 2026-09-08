@@ -44,7 +44,12 @@ if isfield(opt_structure, 'max_fun_evals')
 else
     max_fun_evals = 5000;
 end
-fm_options = optimset('Display', 'iter', 'MaxFunEvals', max_fun_evals, 'TolFun', 1e-6);
+tol_fun = 1e-6;
+tol_x = 1e-4;
+if isfield(opt_structure, 'tol_fun'), tol_fun = opt_structure.tol_fun; end
+if isfield(opt_structure, 'tol_x'), tol_x = opt_structure.tol_x; end
+fm_options = optimset('Display', 'iter', 'MaxFunEvals', max_fun_evals, ...
+    'TolFun', tol_fun, 'TolX', tol_x);
 [~, ~, exitflag, fm_output] = fminsearch(fh, p_vector, fm_options);
 
 % Save results JSON and sentinel so monitoring agent can read outcome
@@ -60,8 +65,12 @@ try
     n_active = 0;
     for jbi = 1 : numel(opt_structure.job)
         target_raw = dlmread(opt_structure.job{jbi}.target_file_string);
-        tmin = min(target_raw); tmax = max(target_raw);
-        fa = find(target_raw > tmin + 0.05*(tmax-tmin), 1, 'first');
+        if isfield(opt_structure.job{jbi}, 'fit_start_index')
+            fa = opt_structure.job{jbi}.fit_start_index;
+        else
+            tmin = min(target_raw); tmax = max(target_raw);
+            fa = find(target_raw > tmin + 0.05*(tmax-tmin), 1, 'first');
+        end
         if isempty(fa), fa = 1; end
         n_active = n_active + (numel(target_raw) - fa + 1);
     end
@@ -84,6 +93,8 @@ fit_results.iterations = fm_output.iterations;
 fit_results.func_count = fm_output.funcCount;
 fit_results.algorithm = fm_output.algorithm;
 fit_results.message = fm_output.message;
+fit_results.tol_fun = tol_fun;
+fit_results.tol_x = tol_x;
 
 of = fopen(fullfile(results_dir, 'fit_results.json'), 'w');
 fprintf(of, '%s', savejson('', fit_results));

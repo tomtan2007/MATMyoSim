@@ -138,7 +138,7 @@ if (isfield(opt_structure, 'constraint'))
    end
 end       
 
-% Enforce k_2 = 10 * k_1 constraint (SRX entry = 10x SRX exit)
+% Enforce a coupled k_2/k_1 ratio (legacy default = 10).
 % This runs after all free parameters are written, so k_1 reflects
 % the optimizer's current value before k_2 is overwritten.
 % Override: if k_2 is itself listed as a free parameter for this
@@ -152,8 +152,12 @@ end
 if ~k_2_is_free && ...
    isfield(model_struct.MyoSim_model.hs_props.parameters, 'k_1') && ...
    isfield(model_struct.MyoSim_model.hs_props.parameters, 'k_2')
+    k2_k1_ratio = 10;
+    if isfield(opt_structure, 'k_2_k_1_ratio')
+        k2_k1_ratio = opt_structure.k_2_k_1_ratio;
+    end
     k1_val = model_struct.MyoSim_model.hs_props.parameters.k_1;
-    update_model_struct('parameters.k_2', 10 * k1_val);
+    update_model_struct('parameters.k_2', k2_k1_ratio * k1_val);
 end
 
 % Save the model for a potential next job

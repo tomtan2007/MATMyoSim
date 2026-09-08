@@ -1,8 +1,10 @@
-function [e, y_attempt] = evaluate_time_fit(sim_output,target_data,varargin)
+function [e, y_attempt, y_window_bs] = ...
+    evaluate_time_fit(sim_output,target_data,varargin)
 
 p = inputParser;
 p.addParamValue('figure_time_fit',0);
 p.addParamValue('fit_variable','muscle_force');
+p.addParamValue('fit_start_index',[]);
 parse(p,varargin{:});
 p = p.Results;
 
@@ -24,26 +26,22 @@ end
 % Baseline-shift sim to match passive level; compute error over active region only
 y_window = y_attempt(end-target_stats.n+1:end);
 
-baseline_range = target_stats.min + 0.05 * (target_stats.max - target_stats.min);
-first_active = find(target_data > baseline_range, 1, 'first');
-
-if isempty(first_active) || first_active < 2
-    first_active = 1;
-    baseline_y = y_window(1);
-    baseline_t = target_data(1);
+if isempty(p.fit_start_index)
+    baseline_range = target_stats.min + 0.05 * (target_stats.max - target_stats.min);
+    first_active = find(target_data > baseline_range, 1, 'first');
 else
-    passive_idx = 1:(first_active-1);
-    if numel(passive_idx) > 5
-        late_passive = passive_idx(round(0.5*end):end);
-        baseline_y = mean(y_window(late_passive));
-        baseline_t = mean(target_data(late_passive));
-    else
-        baseline_y = mean(y_window(passive_idx));
-        baseline_t = mean(target_data(passive_idx));
+    first_active = round(p.fit_start_index);
+    if ~isscalar(first_active) || first_active < 1 || first_active > target_stats.n
+        error('evaluate_time_fit:badFitStartIndex', ...
+            'fit_start_index must be an integer within the target data.');
     end
 end
 
-y_window_bs = y_window - baseline_y + baseline_t;
+if isempty(first_active) || first_active < 2
+    first_active = 1;
+end
+y_window_bs = align_time_fit_baseline( ...
+    y_window, target_data, first_active);
 
 active_idx = first_active:numel(target_data);
 n_active   = numel(active_idx);
@@ -52,7 +50,7 @@ e = sum(((y_window_bs(active_idx) - target_data(active_idx))./ ...
             (target_stats.max - target_stats.min)).^2) / n_active;
 
 % Plot result
-if (p.figure_time_fit);
+if (p.figure_time_fit)
     figure(p.figure_time_fit);
     clf;
     hold on;

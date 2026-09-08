@@ -1,0 +1,47 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_HCM\/temp\/best\/model_best.json",
+		"fit_mode": "fit_in_time_domain",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/results\/hcm_acute_r20_wide",
+		"best_opt_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/results\/hcm_acute_r20_wide\/best_opt.json",
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"max_fun_evals": 350,
+		"k_2_k_1_ratio": 20,
+		"job": [
+			{
+				"model_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/results\/hcm_acute_r20_wide\/model_worker.json",
+				"protocol_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/data\/hcm_acute_protocol.txt",
+				"options_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_HCM\/sim_input\/sim_options.json",
+				"results_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/results\/hcm_acute_r20_wide\/twitch.myo",
+				"target_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/data\/hcm_acute_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_1",
+				"min_value": -0.7707611233,
+				"max_value": 3.229238877,
+				"p_value": -1.154368e-07,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_3",
+				"min_value": -0.8048949755,
+				"max_value": 3.195105025,
+				"p_value": 0.4839235777,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_5_0",
+				"min_value": 1.058038631,
+				"max_value": 5.058038631,
+				"p_value": 0.628998849,
+				"p_mode": "log"
+			}
+		],
+		"model_working_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/results\/hcm_acute_r20_wide\/model_worker.json",
+		"best_model_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/results\/hcm_acute_r20_wide\/model_best.json"
+	}
+}

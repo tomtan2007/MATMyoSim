@@ -69,6 +69,7 @@ switch opt_structure.fit_mode
                         'options_file_string',opt_structure.job{i}.options_file_string, ...
                         'fit_mode', opt_structure.fit_mode, ...
                         'fit_variable',opt_structure.fit_variable, ...
+                        'fit_start_index',get_fit_start_index(opt_structure.job{i}), ...
                         'target_data',target_data{i});
             end
         else
@@ -84,6 +85,7 @@ switch opt_structure.fit_mode
                     'options_file_string', opt_structure.job{1}.options_file_string, ...
                     'fit_mode', opt_structure.fit_mode, ...
                     'fit_variable', opt_structure.fit_variable, ...
+                    'fit_start_index',get_fit_start_index(opt_structure.job{1}), ...
                     'target_data', target_data{1});
         end
         
@@ -95,5 +97,12 @@ end
 % Calculate e, adding boundary penalty to discourage OOB exploration
 e = mean(trial_e) + boundary_penalty;
 fprintf('  eval: e=%.4f  p=[%s]\n', e, num2str(p_vector, '%.3f '));
+end
 
-  
+function idx = get_fit_start_index(job)
+if isfield(job, 'fit_start_index')
+    idx = job.fit_start_index;
+else
+    idx = [];
+end
+end

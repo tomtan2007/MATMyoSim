@@ -1,0 +1,45 @@
+{
+  "MyoSim_optimization": {
+    "model_template_file_string": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/twitch_6state_control/temp/best/model_best.json",
+    "fit_mode": "fit_in_time_domain",
+    "fit_variable": "muscle_force",
+    "best_model_folder": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/mava_codex/output/results/ctrl_acute_r10_wide",
+    "best_opt_file_string": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/mava_codex/output/results/ctrl_acute_r10_wide/best_opt.json",
+    "figure_current_fit": 0,
+    "figure_optimization_progress": 0,
+    "max_fun_evals": 350,
+    "k_2_k_1_ratio": 10,
+    "job": [
+      {
+        "model_file_string": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/mava_codex/output/results/ctrl_acute_r10_wide/model_worker.json",
+        "protocol_file_string": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/mava_codex/output/data/ctrl_acute_protocol.txt",
+        "options_file_string": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/twitch_6state_control/sim_input/sim_options.json",
+        "results_file_string": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/mava_codex/output/results/ctrl_acute_r10_wide/twitch.myo",
+        "target_file_string": "/Users/tomtan/Research/MATMyoSim/Code/Fitting/mava_codex/output/data/ctrl_acute_target.txt"
+      }
+    ],
+    "parameter": [
+      {
+        "name": "k_1",
+        "min_value": -1.2513654996999999,
+        "max_value": 2.7486345,
+        "p_value": 0.5,
+        "p_mode": "log"
+      },
+      {
+        "name": "k_3",
+        "min_value": -0.5996053601,
+        "max_value": 3.40039464,
+        "p_value": 0.5,
+        "p_mode": "log"
+      },
+      {
+        "name": "k_5_0",
+        "min_value": 0.38116202899999996,
+        "max_value": 4.381162029,
+        "p_value": 0.5,
+        "p_mode": "log"
+      }
+    ]
+  }
+}
