@@ -20,7 +20,7 @@ opt.parameter = { ...
     struct('name', 'first', 'p_value', -0.2), ...
     struct('name', 'second', 'p_value', 1.2)};
 opt.job = {struct('target_file_string', target_file, ...
-    'fit_start_index', 481)};
+    'fit_start_index', 480.6)};
 opt.best_opt_file_string = fullfile(result_dir, 'best_optimization.json');
 opt.figure_optimization_progress = 0;
 opt.figure_current_fit = 0;
@@ -96,6 +96,13 @@ assert(abs(multiplier.p_value_raw - 0.4) < 1e-12, ...
     'Raw multiplier coordinate was not saved on the multiplier entry.');
 assert(abs(multiplier.p_value - 0.4) < 1e-12, ...
     'Clamped multiplier coordinate was not saved on the multiplier entry.');
+
+auto_opt = opt;
+auto_opt.job{1}.fit_start_index = [];
+auto_opt.best_opt_file_string = fullfile(result_dir, 'auto_optimization.json');
+auto_results = fit_controller(auto_opt);
+assert(auto_results.n_active_points == 475, ...
+    'An empty fit start must use the same threshold detection as fitting.');
 
 fprintf('PASS: fit_controller convergence and boundary diagnostics\n');
 end

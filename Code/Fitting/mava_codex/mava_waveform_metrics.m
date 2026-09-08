@@ -87,14 +87,9 @@ m.fwhm = t(right_idx) - t(left_idx);
 end
 m.normalized_rmse = NaN;
 if ~isempty(options.target)
-    first_scored = round(options.fit_start_index);
-    if ~isscalar(first_scored) || first_scored < 1 || ...
-            first_scored > numel(target)
-        error('mava_waveform_metrics:badFitStartIndex', ...
-            'fit_start_index must identify a signal sample.');
-    end
+    [first_scored, target_range] = resolve_time_fit_start_index( ...
+        target, options.fit_start_index);
     scored = first_scored:numel(target);
-    target_range = max(target(scored)) - min(target(scored));
     if target_range <= 0
         error('mava_waveform_metrics:constantTarget', ...
             'Target must vary over the scored window.');

@@ -16,45 +16,31 @@ switch p.fit_variable
         error('Invalid fit_variable');
 end
 
-% Sum of squares error for last part of simulation
-target_stats = summary_stats(target_data);
-
-if (target_stats.max == target_stats.min)
-    error('target_data has no range');
-end
-
 % Baseline-shift sim to match passive level; compute error over active region only
-y_window = y_attempt(end-target_stats.n+1:end);
-
-if isempty(p.fit_start_index)
-    baseline_range = target_stats.min + 0.05 * (target_stats.max - target_stats.min);
-    first_active = find(target_data > baseline_range, 1, 'first');
-else
-    first_active = round(p.fit_start_index);
-    if ~isscalar(first_active) || first_active < 1 || first_active > target_stats.n
-        error('evaluate_time_fit:badFitStartIndex', ...
-            'fit_start_index must be an integer within the target data.');
-    end
+target_data_scored = target_data(:);
+[first_active, target_range] = resolve_time_fit_start_index( ...
+    target_data_scored, p.fit_start_index);
+if ~(isfinite(target_range) && target_range > 0)
+    error('evaluate_time_fit:noTargetRange', ...
+        'Scored target_data has no finite range.');
 end
-
-if isempty(first_active) || first_active < 2
-    first_active = 1;
-end
+y_window = y_attempt(end-numel(target_data_scored)+1:end);
 y_window_bs = align_time_fit_baseline( ...
-    y_window, target_data, first_active);
+    y_window, target_data_scored, first_active);
 
-active_idx = first_active:numel(target_data);
+active_idx = first_active:numel(target_data_scored);
 n_active   = numel(active_idx);
 
-e = sum(((y_window_bs(active_idx) - target_data(active_idx))./ ...
-            (target_stats.max - target_stats.min)).^2) / n_active;
+e = sum(((y_window_bs(active_idx) - target_data_scored(active_idx))./ ...
+            target_range).^2) / n_active;
 
 % Plot result
 if (p.figure_time_fit)
     figure(p.figure_time_fit);
     clf;
     hold on;
-    plot(sim_output.time_s(end-target_stats.n+1:end),target_data,'k-');
+    plot(sim_output.time_s(end-numel(target_data_scored)+1:end), ...
+        target_data_scored, 'k-');
     plot(sim_output.time_s,y_attempt,'b-');
     drawnow;
 end

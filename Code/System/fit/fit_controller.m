@@ -66,15 +66,17 @@ try
     for jbi = 1 : numel(opt_structure.job)
         target_raw = dlmread(opt_structure.job{jbi}.target_file_string);
         if isfield(opt_structure.job{jbi}, 'fit_start_index')
-            fa = opt_structure.job{jbi}.fit_start_index;
+            configured_start = opt_structure.job{jbi}.fit_start_index;
         else
-            tmin = min(target_raw); tmax = max(target_raw);
-            fa = find(target_raw > tmin + 0.05*(tmax-tmin), 1, 'first');
+            configured_start = [];
         end
-        if isempty(fa), fa = 1; end
+        fa = resolve_time_fit_start_index(target_raw, configured_start);
         n_active = n_active + (numel(target_raw) - fa + 1);
     end
-catch
+catch ME
+    if startsWith(ME.identifier, 'resolve_time_fit_start_index:')
+        rethrow(ME);
+    end
     n_active = NaN;
 end
 
