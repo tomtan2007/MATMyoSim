@@ -25,33 +25,33 @@
 				"name": "k_1",
 				"min_value": 0.2292388767,
 				"max_value": 2.229238877,
-				"p_value": 0.00194573225,
+				"p_value": 1.077221823e-06,
 				"p_mode": "log",
-				"p_value_raw": 0.00194573225
+				"p_value_raw": 1.077221823e-06
 			},
 			{
 				"name": "k_2",
 				"min_value": 1.229238877,
 				"max_value": 3.229238877,
-				"p_value": 0.6645197684,
+				"p_value": 0.3753808252,
 				"p_mode": "log",
-				"p_value_raw": 0.6645197684
+				"p_value_raw": 0.3753808252
 			},
 			{
 				"name": "k_3",
 				"min_value": 0.1951050245,
 				"max_value": 2.195105025,
-				"p_value": 0.9563041751,
+				"p_value": 0.6728467908,
 				"p_mode": "log",
-				"p_value_raw": 0.9563041751
+				"p_value_raw": 0.6728467908
 			},
 			{
 				"name": "k_5_0",
 				"min_value": 2.058038631,
 				"max_value": 4.058038631,
-				"p_value": 0.2283603909,
+				"p_value": 0.2321513493,
 				"p_mode": "log",
-				"p_value_raw": 0.2283603909
+				"p_value_raw": 0.2321513493
 			}
 		],
 		"model_working_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/shared_by_genotype\/H251N\/plus_k50\/s04\/model_worker.json",

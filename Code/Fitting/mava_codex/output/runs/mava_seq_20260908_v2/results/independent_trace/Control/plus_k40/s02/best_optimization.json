@@ -1,0 +1,68 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_control\/temp\/best\/model_best.json",
+		"fit_mode": "fit_in_time_domain",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/independent_trace\/Control\/plus_k40\/s02",
+		"best_opt_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/independent_trace\/Control\/plus_k40\/s02\/best_optimization.json",
+		"max_fun_evals": 1200,
+		"tol_fun": 1e-05,
+		"tol_x": 0.001,
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"job": [
+			{
+				"model_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/independent_trace\/Control\/plus_k40\/s02\/model_worker.json",
+				"protocol_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/data\/independent_trace\/ctrl_acute_protocol.txt",
+				"options_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/twitch_6state_control\/sim_input\/sim_options.json",
+				"results_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/independent_trace\/Control\/plus_k40\/s02\/twitch.myo",
+				"fit_start_index": 481,
+				"target_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/data\/independent_trace\/ctrl_acute_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_1",
+				"min_value": -0.2513654997,
+				"max_value": 1.7486345,
+				"p_value": 0.7523311432,
+				"p_mode": "log",
+				"p_value_raw": 0.7523311432
+			},
+			{
+				"name": "k_2",
+				"min_value": 0.7486345003,
+				"max_value": 2.7486345,
+				"p_value": 0.2390952878,
+				"p_mode": "log",
+				"p_value_raw": 0.2390952878
+			},
+			{
+				"name": "k_3",
+				"min_value": 0.4003946399,
+				"max_value": 2.40039464,
+				"p_value": 0.342240059,
+				"p_mode": "log",
+				"p_value_raw": 0.342240059
+			},
+			{
+				"name": "k_5_0",
+				"min_value": 1.381162029,
+				"max_value": 3.381162029,
+				"p_value": 0.1511133055,
+				"p_mode": "log",
+				"p_value_raw": 0.1511133055
+			},
+			{
+				"name": "k_4_0",
+				"min_value": 0.7152359693,
+				"max_value": 2.715235969,
+				"p_value": 0.5753121531,
+				"p_mode": "log",
+				"p_value_raw": 0.5753121531
+			}
+		],
+		"model_working_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/independent_trace\/Control\/plus_k40\/s02\/model_worker.json",
+		"best_model_file_string": "\/Users\/tomtan\/Research\/MATMyoSim\/Code\/Fitting\/mava_codex\/output\/runs\/mava_seq_20260908_v2\/results\/independent_trace\/Control\/plus_k40\/s02\/model_best.json"
+	}
+}

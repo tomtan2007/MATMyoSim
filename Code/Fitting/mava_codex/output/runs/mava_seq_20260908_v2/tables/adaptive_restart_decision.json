@@ -1,0 +1,1 @@
+{"schema_version":1,"activate":true,"groups":[{"id":"shared_by_genotype__Control","reason":"fewer than 3 near-optimal starts; boundary hit in best run"},{"id":"shared_by_genotype__H251N","reason":"fewer than 3 near-optimal starts; boundary hit in best run"},{"id":"independent_trace__Control","reason":"fewer than 3 near-optimal starts; boundary hit in best run"}]}
