@@ -61,23 +61,33 @@ k = numel(p_vector);
 % so n_active*log(best_e)+2k is only an approximation of a true joint
 % AIC here (exact when all jobs have equal n_active). Treat joint-fit
 % AIC values as comparative/approximate, not literal.
-try
-    n_active = 0;
-    for jbi = 1 : numel(opt_structure.job)
-        target_raw = dlmread(opt_structure.job{jbi}.target_file_string);
-        if isfield(opt_structure.job{jbi}, 'fit_start_index')
-            configured_start = opt_structure.job{jbi}.fit_start_index;
-        else
-            configured_start = [];
-        end
-        fa = resolve_time_fit_start_index(target_raw, configured_start);
-        n_active = n_active + (numel(target_raw) - fa + 1);
-    end
-catch ME
-    if startsWith(ME.identifier, 'resolve_time_fit_start_index:')
-        rethrow(ME);
-    end
+is_feature_fit = isfield(opt_structure, 'fit_mode') && ...
+    strcmp(opt_structure.fit_mode, 'fit_twitch_features');
+if is_feature_fit
+    % Feature residuals are correlated summary statistics. Do not report
+    % the pointwise-waveform AIC formula as though every time sample were
+    % an independent observation. Population-error AIC is added only once
+    % per-feature variances are available.
     n_active = NaN;
+else
+    try
+        n_active = 0;
+        for jbi = 1 : numel(opt_structure.job)
+            target_raw = dlmread(opt_structure.job{jbi}.target_file_string);
+            if isfield(opt_structure.job{jbi}, 'fit_start_index')
+                configured_start = opt_structure.job{jbi}.fit_start_index;
+            else
+                configured_start = [];
+            end
+            fa = resolve_time_fit_start_index(target_raw, configured_start);
+            n_active = n_active + (numel(target_raw) - fa + 1);
+        end
+    catch ME
+        if startsWith(ME.identifier, 'resolve_time_fit_start_index:')
+            rethrow(ME);
+        end
+        n_active = NaN;
+    end
 end
 
 fit_results.best_error     = best_fit_error;
@@ -88,6 +98,11 @@ if ~isnan(n_active) && best_fit_error > 0
     fit_results.aic = n_active * log(best_fit_error) + 2 * k;
 else
     fit_results.aic = NaN;
+end
+if is_feature_fit
+    fit_results.aic_note = ['Feature objective uses correlated summary ' ...
+        'statistics; AIC is deferred until population feature variances ' ...
+        'are available.'];
 end
 fit_results.timestamp = datestr(now, 'yyyy-mm-dd HH:MM:SS');
 fit_results.exitflag = exitflag;

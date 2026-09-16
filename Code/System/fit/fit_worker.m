@@ -51,7 +51,7 @@ switch opt_structure.fit_mode
             
         end
         
-    case 'fit_in_time_domain'
+    case {'fit_in_time_domain', 'fit_twitch_features'}
         if (numel(opt_structure.job)>1)
             % Multiple jobs - run in parallel
             parfor i=1:numel(opt_structure.job)
@@ -70,6 +70,7 @@ switch opt_structure.fit_mode
                         'fit_mode', opt_structure.fit_mode, ...
                         'fit_variable',opt_structure.fit_variable, ...
                         'fit_start_index',get_fit_start_index(opt_structure.job{i}), ...
+                        'feature_spec',get_feature_spec(opt_structure.job{i}), ...
                         'target_data',target_data{i});
             end
         else
@@ -86,6 +87,7 @@ switch opt_structure.fit_mode
                     'fit_mode', opt_structure.fit_mode, ...
                     'fit_variable', opt_structure.fit_variable, ...
                     'fit_start_index',get_fit_start_index(opt_structure.job{1}), ...
+                    'feature_spec',get_feature_spec(opt_structure.job{1}), ...
                     'target_data', target_data{1});
         end
         
@@ -104,5 +106,13 @@ if isfield(job, 'fit_start_index')
     idx = job.fit_start_index;
 else
     idx = [];
+end
+end
+
+function spec = get_feature_spec(job)
+if isfield(job, 'feature_spec')
+    spec = job.feature_spec;
+else
+    spec = [];
 end
 end
