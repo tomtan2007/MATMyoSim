@@ -1,0 +1,10 @@
+Thresholds are relative to the baseline-corrected robust peak.
+relaxation_50_time: peak-centroid to 50% remaining force.
+relaxation_90_time: peak-centroid to 10% remaining force.
+duration_above_X: rising-to-falling width at X% amplitude.
+plateau_duration: contiguous time at or above 95% amplitude.
+auc_normalized: full available positive AUC divided by peak amplitude.
+auc_to_relax50_normalized: comparable shape AUC ending at 50% relaxation.
+auc_to_relax90_normalized: shape AUC ending at 90% relaxation when observed.
+max/min_force_rate: force derivatives, not shortening velocity.
+decay_X_from_plateau_end: decay timing with broad peak duration removed.
