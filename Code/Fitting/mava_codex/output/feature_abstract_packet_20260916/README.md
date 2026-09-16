@@ -13,8 +13,10 @@ converged parameter estimates.
   for Control and 10.47 for H251N.
 - Adding `k_4_0` and `k_7_3` reduced the H251N error to 2.91 but did not improve
   Control at the current budget (6.20).
-- Control onset remained approximately 186 ms too early in the model. This
-  should not be interpreted mechanistically until stimulus alignment is known.
+- Control onset appeared approximately 186 ms too early in the model under the
+  shared-by-genotype timing policy. A direct sensitivity check shows that this
+  policy adds 193 ms to the Control acute trace relative to trace-specific
+  alignment, so it should not be interpreted mechanistically.
 - These runs do not support a unique kinetic-driver claim.
 
 ## Figure caption
@@ -30,7 +32,9 @@ the summary features are correlated and population variance is not yet known.
 
 ## Next gate
 
-Import the individual-cell normalized workbook, estimate feature variability
-and covariance, confirm stimulus alignment, freeze the objective, and only then
-run multistart comparisons. The generated `prepared_data/` directory is a
-reproducibility input for the displayed simulations, not a population dataset.
+Confirm whether the traces have a verified common stimulus clock. If they do
+not, use trace-specific alignment, then import the individual-cell normalized
+workbook, estimate feature variability and covariance, freeze the objective,
+and only then run multistart comparisons. The generated `prepared_data/`
+directory is a reproducibility input for the displayed simulations, not a
+population dataset.

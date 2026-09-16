@@ -61,10 +61,13 @@ claims.
   prototype.
 - H251N amplitude is about 23% high; peak timing and 90% relaxation remain too fast.
 
-The Control onset result depends on the unresolved stimulus-alignment question.
-The source workbook does not state whether all six traces share an absolute
-electrical/calcium stimulus time. Do not interpret onset parameter effects until
-that metadata question is answered.
+The Control onset result is now identified as an alignment-policy sensitivity.
+The shared-by-genotype preparation anchored the acute Control trace to the
+Control Before trough, creating a 193 ms apparent delay. Trace-specific
+alignment reduces its force-rise lag from 208 ms to 15 ms. The source workbook
+does not state whether all six traces share an absolute electrical/calcium
+stimulus time, so do not interpret onset parameter effects until that metadata
+question is answered.
 
 ## Next execution gate
 
