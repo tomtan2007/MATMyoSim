@@ -1,0 +1,46 @@
+function test_mava_feature_metrics
+repo_root = fullfile(fileparts(mfilename('fullpath')), '..', '..');
+addpath(fullfile(repo_root, 'Code', 'Fitting', 'mava_codex'));
+
+t = (0:0.01:1)';
+y = 5*ones(size(t));
+rise = t >= 0.20 & t < 0.40;
+plateau = t >= 0.40 & t <= 0.60;
+decay = t > 0.60 & t <= 0.80;
+y(rise) = 5 + 100*(t(rise)-0.20)/0.20;
+y(plateau) = 105;
+y(decay) = 5 + 100*(0.80-t(decay))/0.20;
+y(t > 0.80) = 5;
+y(t == 0.50) = 155; % Isolated peak noise should be rejected.
+
+m = mava_feature_metrics(t, y, 'ReferenceOnsetTime', 0.20, ...
+    'BaselineIndices', find(t < 0.20), 'SmoothWindowSamples', 3, ...
+    'PersistenceSamples', 2);
+
+assert(abs(m.baseline - 5) < 1e-12, 'Baseline is incorrect.');
+assert(abs(m.peak_amplitude - 100) < 1, ...
+    'The isolated peak spike should not define twitch amplitude.');
+assert(m.peak_time_centroid > 0.45 && m.peak_time_centroid < 0.55, ...
+    'Broad-peak centroid is incorrect.');
+assert(abs(m.rise_20_to_50 - 0.06) < 0.02, ...
+    '20-to-50%% activation interval is incorrect.');
+assert(abs(m.relaxation_50_time - 0.20) < 0.03, ...
+    'Peak-centroid to 50%% relaxation is incorrect.');
+assert(abs(m.decay_50_from_plateau_end - 0.10) < 0.03, ...
+    'Plateau-adjusted 50%% decay time is incorrect.');
+assert(abs(m.relaxation_90_time - 0.28) < 0.04, ...
+    '90%% relaxation must use the 10%% remaining-force crossing.');
+assert(m.duration_above_50 > m.duration_above_90, ...
+    '50%% width must exceed 90%% width.');
+assert(m.auc_positive > 0 && m.auc_normalized > 0, ...
+    'AUC features must be positive for a positive twitch.');
+assert(m.auc_to_relax50_normalized > 0 && ...
+    m.auc_to_relax90_normalized > m.auc_to_relax50_normalized, ...
+    'Threshold-bounded normalized AUC features are inconsistent.');
+assert(m.max_force_rate > 0 && m.min_force_rate < 0, ...
+    'Force-rate extrema have the wrong signs.');
+assert(~m.missing_relaxation_90 && ~m.low_signal_to_noise, ...
+    'Clean synthetic twitch should pass quality flags.');
+
+fprintf('PASS: Mava feature metrics\n');
+end
