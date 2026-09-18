@@ -1,0 +1,4 @@
+stage_id,free_parameter_types,best_error,median_error,n_within_10pct_best,best_improvement_vs_core_percent,accepted,decision
+core_k1_k3_k50_r4,"core: k_1, k_3, k_5_0",0.543286783273078,1.598857406621,1,0,1,Prespecified starting stage
+plus_k40_r4,"core + k_4_0",0.54242404023014,0.985873423529577,2,0.158800668357896,0,Rejected: <1% best-case gain and not consistent across starts
+plus_k73_r4,"core + k_7_3",0.542472801875648,0.734435189042441,1,0.149825363415992,0,Rejected: <1% best-case gain and late residual pattern persisted

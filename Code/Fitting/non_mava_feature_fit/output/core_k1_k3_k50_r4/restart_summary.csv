@@ -1,0 +1,5 @@
+restart,best_error,control_error,h251n_error,exitflag,func_count,result_dir
+1,0.544292219121909,0.274383461188318,0.814200977055499,0,100,C:\Users\tomtan\MATMyoSim\Code\Fitting\non_mava_feature_fit\output\core_k1_k3_k50_r4\s01\results\joint_feature_fit
+2,1.84068690266818,2.57158210619934,1.10979169913701,0,101,C:\Users\tomtan\MATMyoSim\Code\Fitting\non_mava_feature_fit\output\core_k1_k3_k50_r4\s02\results\joint_feature_fit
+3,1.37446246881185,1.9723405413478,0.776584396275891,0,100,C:\Users\tomtan\MATMyoSim\Code\Fitting\non_mava_feature_fit\output\core_k1_k3_k50_r4\s03\results\joint_feature_fit
+4,1.82325234443014,0.771479004675348,2.87502568418493,0,100,C:\Users\tomtan\MATMyoSim\Code\Fitting\non_mava_feature_fit\output\core_k1_k3_k50_r4\s04\results\joint_feature_fit
