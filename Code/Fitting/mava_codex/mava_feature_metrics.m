@@ -77,15 +77,22 @@ if isempty(reference_idx) || reference_idx >= numel(t)
 end
 
 active = reference_idx:numel(t);
-[peak_amplitude, local_peak] = max(smooth_y(active));
+[landmark_peak_amplitude, local_peak] = max(smooth_y(active));
 peak_idx = active(local_peak);
-if ~isfinite(peak_amplitude) || peak_amplitude <= 0
+if ~isfinite(landmark_peak_amplitude) || landmark_peak_amplitude <= 0
     error('mava_feature_metrics:noPositiveTwitch', ...
         'No positive twitch was detected after the reference onset.');
 end
 
-peak_band = contiguous_peak_band(smooth_y, peak_idx, 0.95*peak_amplitude, ...
+peak_band = contiguous_peak_band(smooth_y, peak_idx, ...
+    0.95*landmark_peak_amplitude, ...
     reference_idx);
+% Smoothing identifies the dominant peak and its contiguous plateau only.
+% Report a robust top-of-peak amplitude from the original baseline-corrected
+% samples so smoothing does not attenuate it and one isolated spike cannot
+% define it. This is the median of the highest 10% (at least three) samples
+% in the detected contiguous peak band.
+peak_amplitude = robust_peak_amplitude(corrected(peak_band));
 peak_time_centroid = mean(t(peak_band));
 peak_plateau_level = median(corrected(peak_band));
 peak_residual = corrected(peak_band) - smooth_y(peak_band);
@@ -95,7 +102,7 @@ fractions = [0.05 0.20 0.30 0.50 0.90];
 rise_crossing = nan(size(fractions));
 for i = 1:numel(fractions)
     rise_crossing(i) = sustained_crossing(t, smooth_y, ...
-        reference_idx, peak_idx, fractions(i)*peak_amplitude, ...
+        reference_idx, peak_idx, fractions(i)*landmark_peak_amplitude, ...
         'rising', options.PersistenceSamples);
 end
 force_onset_time = rise_crossing(1);
@@ -104,7 +111,7 @@ decay_fractions = [0.90 0.50 0.20 0.10];
 decay_crossing = nan(size(decay_fractions));
 for i = 1:numel(decay_fractions)
     decay_crossing(i) = sustained_crossing(t, smooth_y, ...
-        peak_idx, numel(t), decay_fractions(i)*peak_amplitude, ...
+        peak_idx, numel(t), decay_fractions(i)*landmark_peak_amplitude, ...
         'falling', options.PersistenceSamples);
 end
 
@@ -196,6 +203,12 @@ while right < numel(y) && y(right+1) >= threshold
     right = right + 1;
 end
 indices = left:right;
+end
+
+function amplitude = robust_peak_amplitude(y)
+y = sort(y(:), 'descend');
+n_top = min(numel(y), max(3, round(0.10*numel(y))));
+amplitude = median(y(1:n_top));
 end
 
 function crossing_time = sustained_crossing(t, y, first_idx, last_idx, ...
