@@ -1,0 +1,27 @@
+{
+  "force_source": "C:\\Users\\tomtan\\MATMyoSim\\Code\\System\\experimental_data\\Updated cell trace data.xlsx",
+  "protocol_source": "C:\\Users\\tomtan\\MATMyoSim\\Code\\System\\protocols\\protocol_1s.txt",
+  "force_source_reason": "Workbook contains the complete matching time/force traces; named MAT files are rounded subsets.",
+  "cell_time_trace_points": 34,
+  "cell_time_trace_range": [
+    0.029411765,
+    1
+  ],
+  "ca_transients_shape": [
+    2056,
+    2
+  ],
+  "ca_transients_range": [
+    [
+      6.17431,
+      6.17338
+    ],
+    [
+      6.73912,
+      6.72034
+    ]
+  ],
+  "ca_transients_used_for_fit": false,
+  "mava_data_used": false,
+  "alignment": "Original workbook timestamps retained; force onset is detected independently for each condition relative to protocol calcium onset."
+}

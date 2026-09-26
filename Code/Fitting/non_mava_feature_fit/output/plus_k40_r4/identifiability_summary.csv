@@ -1,0 +1,2 @@
+n_restarts,n_within_10pct_best,best_error,median_error,worst_error,error_sd,near_best_cutoff
+4,2,0.543411142474046,0.985873423529577,16.1587019943101,7.67007821539578,0.597752256721451

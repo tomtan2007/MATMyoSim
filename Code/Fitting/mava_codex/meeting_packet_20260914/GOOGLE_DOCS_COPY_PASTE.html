@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mavacamten Sequential Analysis — PI Meeting</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; color: #202124; max-width: 900px; margin: 36px auto; line-height: 1.42; }
+  h1 { color: #174ea6; font-size: 27px; margin-bottom: 4px; }
+  h2 { color: #174ea6; font-size: 20px; margin-top: 28px; border-bottom: 2px solid #d2e3fc; padding-bottom: 4px; }
+  h3 { font-size: 16px; margin-top: 22px; }
+  .subtitle { color: #5f6368; margin-top: 0; }
+  .headline { background: #e8f0fe; border-left: 5px solid #1a73e8; padding: 12px 16px; font-size: 16px; }
+  .warning { background: #fef7e0; border-left: 5px solid #f9ab00; padding: 11px 15px; }
+  .conclusion { background: #e6f4ea; border-left: 5px solid #34a853; padding: 12px 16px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 20px; font-size: 12px; }
+  th { background: #d2e3fc; text-align: left; }
+  th, td { border: 1px solid #9aa0a6; padding: 6px 7px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8f9fa; }
+  img { width: 100%; height: auto; margin: 8px 0 4px; border: 1px solid #dadce0; }
+  .caption { color: #5f6368; font-size: 12px; margin: 0 0 20px; }
+  .pagebreak { page-break-before: always; }
+  li { margin-bottom: 5px; }
+  blockquote { border-left: 4px solid #34a853; margin-left: 0; padding: 8px 14px; background: #f1f8f3; }
+</style>
+</head>
+<body>
+
+<h1>Mavacamten Sequential Analysis</h1>
+<p class="subtitle">PI meeting — September 14, 2026<br>
+Authoritative run: <code>mava_seq_20260908_v2</code> · 60 completed fits</p>
+
+<div class="headline"><strong>Main result:</strong> Acute mavacamten reduces peak force to approximately one-third of baseline in both Control and H251N. This suppression cannot be reproduced by changing only SRX/DRX exchange and attachment rates. Allowing the forward power-stroke parameter <code>k_5_0</code> to decrease produces the dominant fit improvement, although exact parameter magnitudes remain practically non-identifiable.</div>
+
+<h2>1. Experimental effect</h2>
+
+<table>
+<thead><tr><th>Genotype</th><th>Before peak (N/m²)</th><th>Acute peak (N/m²)</th><th>Acute / Before</th><th>24 h peak (N/m²)</th><th>24 h / Before</th></tr></thead>
+<tbody>
+<tr><td>Control</td><td>4,367.66</td><td>1,516.41</td><td><strong>34.7%</strong></td><td>2,004.62</td><td>45.9%</td></tr>
+<tr><td>H251N</td><td>9,055.37</td><td>2,994.61</td><td><strong>33.1%</strong></td><td>4,828.25</td><td>53.3%</td></tr>
+</tbody>
+</table>
+
+<p>The optimization fits the acute traces. The 24-hour values provide descriptive evidence of partial recovery but were not fitted.</p>
+
+<img src="figures/experimental_traces_and_alignment.png" alt="Experimental traces and alignment">
+<p class="caption"><strong>Figure 1.</strong> Acute experimental traces and measured force suppression. Control has a large alignment-dependent timing shift.</p>
+
+<h2>2. Nested-model comparison</h2>
+
+<p>The stored optimization error is squared normalized RMSE. The percentages below are NRMSE = √error. AIC is compared only within the same genotype and alignment policy.</p>
+
+<table>
+<thead><tr><th>Group</th><th>Stage</th><th>Treatment parameters</th><th>NRMSE</th><th>AIC</th><th>AIC improvement</th></tr></thead>
+<tbody>
+<tr><td rowspan="4">Control, shared timing</td><td><code>k123</code></td><td><code>k_1, k_2, k_3</code></td><td>56.2%</td><td>-1,154.62</td><td>—</td></tr>
+<tr><td><code>plus_k50</code></td><td>previous + <code>k_5_0</code></td><td>15.9%</td><td>-3,695.12</td><td><strong>2,540.50</strong></td></tr>
+<tr><td><code>plus_k40</code></td><td>previous + <code>k_4_0</code></td><td>15.8%</td><td><strong>-3,706.38</strong></td><td>11.26</td></tr>
+<tr><td><code>plus_k73</code></td><td>previous + <code>k_7_3</code></td><td>15.8%</td><td>-3,704.39</td><td>-1.99</td></tr>
+<tr><td rowspan="4">H251N, shared timing</td><td><code>k123</code></td><td><code>k_1, k_2, k_3</code></td><td>43.1%</td><td>-1,505.60</td><td>—</td></tr>
+<tr><td><code>plus_k50</code></td><td>previous + <code>k_5_0</code></td><td>5.24%</td><td>-5,287.85</td><td><strong>3,782.25</strong></td></tr>
+<tr><td><code>plus_k40</code></td><td>previous + <code>k_4_0</code></td><td>3.79%</td><td>-5,866.21</td><td>578.36</td></tr>
+<tr><td><code>plus_k73</code></td><td>previous + <code>k_7_3</code></td><td><strong>3.75%</strong></td><td><strong>-5,883.95</strong></td><td>17.75</td></tr>
+<tr><td rowspan="4">Control, independent timing</td><td><code>k123</code></td><td><code>k_1, k_2, k_3</code></td><td>46.1%</td><td>-1,436.24</td><td>—</td></tr>
+<tr><td><code>plus_k50</code></td><td>previous + <code>k_5_0</code></td><td>10.5%</td><td>-4,180.50</td><td><strong>2,744.26</strong></td></tr>
+<tr><td><code>plus_k40</code></td><td>previous + <code>k_4_0</code></td><td>10.1%</td><td>-4,253.04</td><td>72.53</td></tr>
+<tr><td><code>plus_k73</code></td><td>previous + <code>k_7_3</code></td><td>10.1%</td><td>-4,253.18</td><td>0.15</td></tr>
+</tbody>
+</table>
+
+<ul>
+<li><code>k123</code> is inadequate in all three groups.</li>
+<li>Adding <code>k_5_0</code> produces the dominant improvement in every group.</li>
+<li>Adding <code>k_4_0</code> is supported, particularly in H251N and independently aligned Control.</li>
+<li><code>k_7_3</code> is supported in H251N only. It is unsupported in shared Control and adds negligible evidence in independently aligned Control.</li>
+</ul>
+
+<img src="figures/k123_failed_fits.png" alt="Failed k123 fits">
+<p class="caption"><strong>Figure 2.</strong> The three-rate model fails to reproduce the acute response.</p>
+
+<img src="figures/sequential_error_aic.png" alt="Sequential error and AIC">
+<p class="caption"><strong>Figure 3.</strong> Sequential changes in normalized error, within-group ΔAIC, and Akaike weight.</p>
+
+<h2 class="pagebreak">3. Best waveforms</h2>
+
+<table>
+<thead><tr><th>Group</th><th>Selected stage</th><th>NRMSE</th><th>Model peak error</th><th>Target vs model Ca-to-force lag</th><th>Target vs model FWHM</th></tr></thead>
+<tbody>
+<tr><td>Shared Control</td><td><code>plus_k40</code></td><td>15.8%</td><td>-34.5%</td><td>208 vs 0 ms</td><td>608 ms vs unavailable</td></tr>
+<tr><td>Shared H251N</td><td><code>plus_k73</code></td><td><strong>3.75%</strong></td><td>+2.8%</td><td>4 vs 18 ms</td><td>385 vs 378 ms</td></tr>
+<tr><td>Independent Control</td><td><code>plus_k40/plus_k73</code></td><td>10.1%</td><td>-19.2%</td><td>15 vs 0 ms</td><td>608 vs 676 ms</td></tr>
+</tbody>
+</table>
+
+<img src="figures/best_fit_waveforms.png" alt="Best fitted waveforms">
+<p class="caption"><strong>Figure 4.</strong> H251N is fitted extremely well. Control remains underpredicted and depends strongly on the alignment policy.</p>
+
+<h2>4. Representative parameter changes</h2>
+
+<table>
+<thead><tr><th>Group</th><th><code>k_1</code></th><th><code>k_2</code></th><th><code>k_3</code></th><th><code>k_5_0</code></th><th><code>k_4_0</code></th><th><code>k_7_3</code></th></tr></thead>
+<tbody>
+<tr><td>Shared Control, <code>plus_k40</code></td><td>0.137×</td><td>1.26×</td><td>10.0×</td><td><strong>0.170×</strong></td><td>0.637×</td><td>—</td></tr>
+<tr><td>Shared H251N, <code>plus_k73</code></td><td>0.267×</td><td>0.627×</td><td>7.10×</td><td><strong>0.229×</strong></td><td>10.0×</td><td>0.622×</td></tr>
+<tr><td>Independent Control, <code>plus_k73</code></td><td>3.97×</td><td>10.0×</td><td>0.392×</td><td><strong>0.400×</strong></td><td>0.100×</td><td>0.889×</td></tr>
+</tbody>
+</table>
+
+<div class="warning"><strong>Interpretation limit:</strong> Do not report these numbers as identified biological fold changes. The consistent directional candidate is reduced <code>k_5_0</code>. Other estimates change sharply with alignment and optimizer basin. Free <code>k_2</code> is diagnostic only and conflicts with the standard constraint <code>k_2 = 10 × k_1</code>.</div>
+
+<h2>5. Identifiability</h2>
+
+<ul>
+<li>All 60 fits completed and converged numerically.</li>
+<li>Every parameter in each selected final-stage ensemble is classified as practically non-identifiable.</li>
+<li>Each group has only one near-optimal start.</li>
+<li>Shared Control reaches the <code>k_3 = 10×</code> boundary.</li>
+<li>H251N reaches the <code>k_4_0 = 10×</code> boundary.</li>
+<li>Independent Control reaches <code>k_2 = 10×</code> and <code>k_4_0 = 0.1×</code>.</li>
+<li>The adaptive diagnostic requests additional final-stage restarts for all groups.</li>
+</ul>
+
+<img src="figures/boundary_identifiability.png" alt="Boundary and identifiability diagnostics">
+<p class="caption"><strong>Figure 5.</strong> Practical multistart identifiability diagnostics. These are not structural-identifiability results.</p>
+
+<h2>6. Questions for the PI</h2>
+
+<ol>
+<li>Do all six force traces share the same electrical or calcium-stimulus clock, or can each exported trace have an arbitrary time offset?</li>
+<li>Should the apparent 145 ms acute Control delay be preserved as biology or corrected with independent onset alignment?</li>
+<li>Is “mavacamten requires reduced power-stroke capacity, while exact rates remain non-identifiable” sufficiently defensible for the BPS abstract?</li>
+<li>Should the next analysis restore the required <code>k_2 = 10 × k_1</code> constraint?</li>
+<li>Should the 24-hour recovery traces be modeled next or remain descriptive validation data?</li>
+</ol>
+
+<h2>Recommended presentation statement</h2>
+
+<blockquote>Acute mavacamten reduced peak force to 34.7% of baseline in Control and 33.1% in H251N. Models permitting changes only in SRX/DRX exchange and attachment kinetics failed to reproduce the acute waveforms. Allowing the forward power-stroke parameter <code>k_5_0</code> to decrease produced the dominant AIC improvement in every analysis. Exact kinetic fold changes remain practically non-identifiable, and the Control result depends on unresolved stimulus-time alignment.</blockquote>
+
+</body>
+</html>

@@ -62,6 +62,22 @@ for i = 1 : numel(par_structure)
 
 end
 
+% Optional constants that must be identical across all jobs in a joint fit.
+% Unlike opt_structure.parameter, these are never optimizer coordinates.
+if isfield(opt_structure, 'fixed_parameter')
+    fixed_parameters = opt_structure.fixed_parameter;
+    if ~iscell(fixed_parameters), fixed_parameters = {fixed_parameters}; end
+    for i = 1:numel(fixed_parameters)
+        fixed = fixed_parameters{i};
+        if ~isfield(fixed, 'name') || ~isfield(fixed, 'value') || ...
+                ~isscalar(fixed.value) || ~isfinite(fixed.value)
+            error('update_json_model_file:badFixedParameter', ...
+                'Each fixed_parameter needs a finite scalar name/value pair.');
+        end
+        update_model_struct(sprintf('parameters.%s', fixed.name), fixed.value);
+    end
+end
+
 % Update hsl if required
 if (isfield(opt_structure, 'initial_delta_hsl'))
     model_struct.MyoSim_model.hs_props.hs_length = ...

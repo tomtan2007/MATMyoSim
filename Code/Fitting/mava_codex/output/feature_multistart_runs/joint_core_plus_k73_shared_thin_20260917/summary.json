@@ -1,0 +1,20 @@
+{
+	"run_id": "joint_core_plus_k73_shared_thin_20260917",
+	"stage_parameters": [
+		"k_1",
+		"k_3",
+		"k_5_0",
+		"k_7_3"
+	],
+	"restarts": 8,
+	"max_fun_evals": 1,
+	"alignment_policy": "independent_trace",
+	"thin_filament_parameters": [
+		"k_on",
+		"k_off",
+		"k_coop"
+	],
+	"best_restart": 3,
+	"best_result_dir": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_plus_k73_shared_thin_20260917\\s03\\results\\joint_feature_fit",
+	"best_error": 24.919722854396952
+}

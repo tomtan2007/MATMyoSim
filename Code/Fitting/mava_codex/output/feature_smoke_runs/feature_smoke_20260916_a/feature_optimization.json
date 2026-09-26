@@ -1,0 +1,35 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_control\\temp\\best\\model_best.json",
+		"fit_mode": "fit_twitch_features",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\results\\shared_by_genotype\\Control\\k50_only\\s01",
+		"best_opt_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\results\\shared_by_genotype\\Control\\k50_only\\s01\\best_optimization.json",
+		"max_fun_evals": 12,
+		"tol_fun": 0.0001,
+		"tol_x": 0.001,
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"job": [
+			{
+				"model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\results\\shared_by_genotype\\Control\\k50_only\\s01\\model_worker.json",
+				"protocol_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\data\\shared_by_genotype\\ctrl_acute_protocol.txt",
+				"options_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_control\\sim_input\\sim_options.json",
+				"results_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\results\\shared_by_genotype\\Control\\k50_only\\s01\\twitch.myo",
+				"fit_start_index": 481,
+				"target_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\data\\shared_by_genotype\\ctrl_acute_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_5_0",
+				"min_value": 1.3811620289269553,
+				"max_value": 3.3811620289269553,
+				"p_value": 0.5,
+				"p_mode": "log"
+			}
+		],
+		"model_working_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\results\\shared_by_genotype\\Control\\k50_only\\s01\\model_worker.json",
+		"best_model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\results\\shared_by_genotype\\Control\\k50_only\\s01\\model_best.json"
+	}
+}

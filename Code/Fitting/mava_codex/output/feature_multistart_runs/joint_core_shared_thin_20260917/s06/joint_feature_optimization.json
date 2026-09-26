@@ -1,0 +1,112 @@
+{
+	"MyoSim_optimization": {
+		"fit_mode": "fit_twitch_features",
+		"fit_variable": "muscle_force",
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"max_fun_evals": 1,
+		"tol_fun": 0.0001,
+		"tol_x": 0.001,
+		"k_2_k_1_ratio": 10,
+		"best_model_folder": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit",
+		"best_opt_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\best_optimization.json",
+		"job": [
+			{
+				"model_template_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_control\\temp\\best\\model_best.json",
+				"model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\control_worker.json",
+				"protocol_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\data\\independent_trace\\ctrl_acute_protocol.txt",
+				"options_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_control\\sim_input\\sim_options.json",
+				"results_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\control.myo",
+				"target_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\data\\independent_trace\\ctrl_acute_target.txt",
+				"fit_start_index": 481
+			},
+			{
+				"model_template_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_HCM\\temp\\best\\model_best.json",
+				"model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\h251n_worker.json",
+				"protocol_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\data\\independent_trace\\hcm_acute_protocol.txt",
+				"options_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_HCM\\sim_input\\sim_options.json",
+				"results_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\h251n.myo",
+				"target_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\data\\independent_trace\\hcm_acute_target.txt",
+				"fit_start_index": 481
+			}
+		],
+		"model_working_file_string": [
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\control_worker.json",
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\h251n_worker.json"
+		],
+		"best_model_file_string": [
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\control_best.json",
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_multistart_runs\\joint_core_shared_thin_20260917\\s06\\results\\joint_feature_fit\\h251n_best.json"
+		],
+		"fixed_parameter": [
+			{
+				"name": "k_on",
+				"value": 41867700
+			},
+			{
+				"name": "k_off",
+				"value": 12.288600000000001
+			},
+			{
+				"name": "k_coop",
+				"value": 19.9526
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_1_control",
+				"min_value": -0.25136549967363564,
+				"max_value": 1.7486345003263644,
+				"p_value": 0.2541019662500002,
+				"p_mode": "log",
+				"target_name": "k_1",
+				"job": 1
+			},
+			{
+				"name": "k_1_h251n",
+				"min_value": 0.22923887668178677,
+				"max_value": 2.2292388766817868,
+				"p_value": 0.50263010367200023,
+				"p_mode": "log",
+				"target_name": "k_1",
+				"job": 2
+			},
+			{
+				"name": "k_3_control",
+				"min_value": 0.4003946399234446,
+				"max_value": 2.4003946399234444,
+				"p_value": 0.75115824109400031,
+				"p_mode": "log",
+				"target_name": "k_3",
+				"job": 1
+			},
+			{
+				"name": "k_3_h251n",
+				"min_value": 0.19510502450997946,
+				"max_value": 2.1951050245099797,
+				"p_value": 0.39968637851600008,
+				"p_mode": "log",
+				"target_name": "k_3",
+				"job": 2
+			},
+			{
+				"name": "k_5_0_control",
+				"min_value": 1.3811620289269553,
+				"max_value": 3.3811620289269553,
+				"p_value": 0.64821451593800039,
+				"p_mode": "log",
+				"target_name": "k_5_0",
+				"job": 1
+			},
+			{
+				"name": "k_5_0_h251n",
+				"min_value": 2.0580386311252634,
+				"max_value": 4.0580386311252639,
+				"p_value": 0.29674265336000011,
+				"p_mode": "log",
+				"target_name": "k_5_0",
+				"job": 2
+			}
+		]
+	}
+}

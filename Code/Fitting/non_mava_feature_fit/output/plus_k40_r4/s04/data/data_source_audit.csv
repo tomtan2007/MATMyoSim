@@ -1,0 +1,3 @@
+condition,workbook_points,mat_subset_start_row,mat_points,mat_workbook_max_abs_difference,first_time_s,last_time_s,baseline_force_N_per_m2,calcium_reference_time_s
+Control,36,4,31,4.77716639579739e-07,0.352564102564103,1.47435897435897,151.307320747291,0.48
+H251N,36,3,32,4.97600012749899e-07,0.352564102564103,1.47435897435897,111.237026290428,0.48

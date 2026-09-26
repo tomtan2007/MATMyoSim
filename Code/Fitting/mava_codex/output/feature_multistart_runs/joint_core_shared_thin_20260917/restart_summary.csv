@@ -1,0 +1,9 @@
+restart,best_error,control_feature_error,h251n_feature_error,exitflag,func_count,result_dir
+1,1.17366555289817,1.38665551771683,0.960675588079505,1,233,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s01\results\joint_feature_fit
+2,5.88724514112883,1.66989833393678,10.1045919483209,0,7,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s02\results\joint_feature_fit
+3,31.7489031338381,46.4053817826369,17.0924244850392,0,7,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s03\results\joint_feature_fit
+4,49.0587393451864,75.6153143788671,22.5021643115057,0,7,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s04\results\joint_feature_fit
+5,111.475677287645,14.8602075229918,208.091147052297,0,7,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s05\results\joint_feature_fit
+6,377.881899440973,751.303472595964,4.4603262859818,0,7,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s06\results\joint_feature_fit
+7,227.65127056281,22.0510289991427,433.251512126478,0,7,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s07\results\joint_feature_fit
+8,69.0900802130297,84.5761364928321,53.6040239332273,0,7,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_shared_thin_20260917\s08\results\joint_feature_fit

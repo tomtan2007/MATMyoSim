@@ -7,6 +7,17 @@ parse(p, opt_structure, varargin{:});
 p = p.Results;
 opt_structure = p.opt_structure;
 
+% JSON loaders may decode a homogeneous string array as a padded character
+% matrix rather than a cell array. Joint fits require one model path per
+% job, so normalize those lists before simulation or best-model copying.
+if numel(opt_structure.job) > 1 && ...
+        isfield(opt_structure, 'model_working_file_string')
+    opt_structure.model_working_file_string = path_list( ...
+        opt_structure.model_working_file_string);
+    opt_structure.best_model_file_string = path_list( ...
+        opt_structure.best_model_file_string);
+end
+
 % Pull out initial p_vector
 p_vector = [];
 for i=1:numel(opt_structure.parameter)
@@ -27,6 +38,7 @@ end
 % Set up for optimization
 best_objective = inf;
 best_fit_error = inf;
+best_trial_e = [];
 all_e_values = [];
 y_best = [];
 best_p = p_vector;
@@ -44,6 +56,7 @@ if isfield(opt_structure, 'max_fun_evals')
 else
     max_fun_evals = 5000;
 end
+
 tol_fun = 1e-6;
 tol_x = 1e-4;
 if isfield(opt_structure, 'tol_fun'), tol_fun = opt_structure.tol_fun; end
@@ -92,6 +105,7 @@ end
 
 fit_results.best_error     = best_fit_error;
 fit_results.best_objective = best_objective;
+fit_results.job_errors = best_trial_e;
 fit_results.n_free_params  = k;
 fit_results.n_active_points = n_active;
 if ~isnan(n_active) && best_fit_error > 0
@@ -151,6 +165,7 @@ fprintf('=== Fit complete: error=%.6f  objective=%.6f  AIC=%.1f ===\n', ...
         if (e <= best_objective)
             best_objective = e;
             best_fit_error = fit_error;
+            best_trial_e = trial_e;
             y_best = y_attempt;
             best_p = p_vector;
             if (isfield(opt_structure, 'model_working_file_string'))
@@ -225,5 +240,18 @@ fprintf('=== Fit complete: error=%.6f  objective=%.6f  AIC=%.1f ===\n', ...
             error('fit_controller stopped after single run');
         end
     end
+end
+
+function paths = path_list(value)
+if iscell(value)
+    paths = value;
+elseif ischar(value)
+    paths = cellstr(value)';
+elseif isstring(value)
+    paths = cellstr(value(:))';
+else
+    error('fit_controller:badPathList', ...
+        'Joint-fit model paths must be text or a cell array of text.');
+end
 end
 

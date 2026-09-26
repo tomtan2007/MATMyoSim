@@ -132,6 +132,7 @@ end
 
 function fig = new_figure
 fig = figure('Visible','off','Color','w','Position',[40 40 1100 760]);
+theme(fig,'light');
 end
 
 function index = representative_detail(summary, group, stage)

@@ -1,0 +1,68 @@
+{
+	"MyoSim_optimization": {
+		"model_template_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_control\\temp\\best\\model_best.json",
+		"fit_mode": "fit_twitch_features",
+		"fit_variable": "muscle_force",
+		"best_model_folder": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\results\\independent_trace\\Control\\k1_k3_k50_k40_k73\\s01",
+		"best_opt_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\results\\independent_trace\\Control\\k1_k3_k50_k40_k73\\s01\\best_optimization.json",
+		"max_fun_evals": 50,
+		"tol_fun": 0.0001,
+		"tol_x": 0.001,
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"job": [
+			{
+				"model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\results\\independent_trace\\Control\\k1_k3_k50_k40_k73\\s01\\model_worker.json",
+				"protocol_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\data\\independent_trace\\ctrl_acute_protocol.txt",
+				"options_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_control\\sim_input\\sim_options.json",
+				"results_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\results\\independent_trace\\Control\\k1_k3_k50_k40_k73\\s01\\twitch.myo",
+				"fit_start_index": 481,
+				"target_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\data\\independent_trace\\ctrl_acute_target.txt"
+			}
+		],
+		"parameter": [
+			{
+				"name": "k_1",
+				"min_value": -0.2513654997,
+				"max_value": 1.7486345,
+				"p_value": 0.6176850201,
+				"p_mode": "log",
+				"p_value_raw": 0.6176850201
+			},
+			{
+				"name": "k_3",
+				"min_value": 0.4003946399,
+				"max_value": 2.40039464,
+				"p_value": 0.589222291,
+				"p_mode": "log",
+				"p_value_raw": 0.589222291
+			},
+			{
+				"name": "k_5_0",
+				"min_value": 1.381162029,
+				"max_value": 3.381162029,
+				"p_value": 0.2312333081,
+				"p_mode": "log",
+				"p_value_raw": 0.2312333081
+			},
+			{
+				"name": "k_4_0",
+				"min_value": 0.7152359693,
+				"max_value": 2.715235969,
+				"p_value": 0.4960738491,
+				"p_mode": "log",
+				"p_value_raw": 0.4960738491
+			},
+			{
+				"name": "k_7_3",
+				"min_value": -0.09114839832,
+				"max_value": 1.908851602,
+				"p_value": 0.5702897657,
+				"p_mode": "log",
+				"p_value_raw": 0.5702897657
+			}
+		],
+		"model_working_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\results\\independent_trace\\Control\\k1_k3_k50_k40_k73\\s01\\model_worker.json",
+		"best_model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_control_5p_trace_specific_20260916\\results\\independent_trace\\Control\\k1_k3_k50_k40_k73\\s01\\model_best.json"
+	}
+}

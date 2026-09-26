@@ -1,0 +1,3 @@
+restart,best_error,control_feature_error,h251n_feature_error,exitflag,func_count,result_dir
+1,1.08877653956236,1.36723541575803,0.81031766336668,0,300,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_plus_k73_completion_20260917\s01\results\joint_feature_fit
+2,1.13285402985524,1.3910244807729,0.874683578937584,0,306,C:\Users\tomtan\MATMyoSim\Code\Fitting\mava_codex\output\feature_multistart_runs\joint_core_plus_k73_completion_20260917\s02\results\joint_feature_fit

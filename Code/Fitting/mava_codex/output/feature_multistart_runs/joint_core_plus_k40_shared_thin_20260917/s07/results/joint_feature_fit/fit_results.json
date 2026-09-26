@@ -1,0 +1,17 @@
+{
+	"best_error": 255.8173564,
+	"best_objective": 255.8173564,
+	"job_errors": [83.96907428,427.6656386],
+	"n_free_params": 8,
+	"n_active_points": "_NaN_",
+	"aic": "_NaN_",
+	"aic_note": "Feature objective uses correlated summary statistics; AIC is deferred until population feature variances are available.",
+	"timestamp": "2026-09-17 14:48:47",
+	"exitflag": 0,
+	"iterations": 1,
+	"func_count": 9,
+	"algorithm": "Nelder-Mead simplex direct search",
+	"message": "Exiting: Maximum number of function evaluations has been exceeded\n         - increase MaxFunEvals option.\n         Current function value: 255.817356 \n",
+	"tol_fun": 0.0001,
+	"tol_x": 0.001
+}

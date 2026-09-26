@@ -1,0 +1,116 @@
+{
+	"MyoSim_optimization": {
+		"fit_mode": "fit_twitch_features",
+		"fit_variable": "muscle_force",
+		"figure_current_fit": 0,
+		"figure_optimization_progress": 0,
+		"max_fun_evals": 100,
+		"tol_fun": 0.0001,
+		"tol_x": 0.001,
+		"k_2_k_1_ratio": 10,
+		"best_model_folder": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit",
+		"best_opt_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\best_optimization.json",
+		"job": [
+			{
+				"model_template_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\data\\control_template.json",
+				"model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\control_worker.json",
+				"protocol_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\data\\protocol_1s.txt",
+				"options_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_control\\sim_input\\sim_options.json",
+				"results_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\control.myo",
+				"target_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\data\\control_target.txt",
+				"fit_start_index": 481
+			},
+			{
+				"model_template_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\data\\h251n_template.json",
+				"model_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\h251n_worker.json",
+				"protocol_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\data\\protocol_1s.txt",
+				"options_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\twitch_6state_HCM\\sim_input\\sim_options.json",
+				"results_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\h251n.myo",
+				"target_file_string": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\data\\h251n_target.txt",
+				"fit_start_index": 481
+			}
+		],
+		"model_working_file_string": [
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\control_worker.json",
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\h251n_worker.json"
+		],
+		"best_model_file_string": [
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\control_best.json",
+			"C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k40_r4\\s04\\results\\joint_feature_fit\\h251n_best.json"
+		],
+		"parameter": [
+			{
+				"name": "k_1_control",
+				"target_name": "k_1",
+				"job": 1,
+				"min_value": -0.25136549967363564,
+				"max_value": 1.7486345003263644,
+				"p_value": 0.58211650870000009,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_1_h251n",
+				"target_name": "k_1",
+				"job": 2,
+				"min_value": 0.22923887668178677,
+				"max_value": 2.2292388766817868,
+				"p_value": 0.53618583050000002,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_3_control",
+				"target_name": "k_3",
+				"job": 1,
+				"min_value": 0.4003946399234446,
+				"max_value": 2.4003946399234444,
+				"p_value": 0.38038120649999996,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_3_h251n",
+				"target_name": "k_3",
+				"job": 2,
+				"min_value": 0.19510502450997946,
+				"max_value": 2.1951050245099797,
+				"p_value": 0.44912601479999997,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_5_0_control",
+				"target_name": "k_5_0",
+				"job": 1,
+				"min_value": 1.3811620289269553,
+				"max_value": 3.3811620289269553,
+				"p_value": 0.61019898240000003,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_5_0_h251n",
+				"target_name": "k_5_0",
+				"job": 2,
+				"min_value": 2.0580386311252634,
+				"max_value": 4.0580386311252639,
+				"p_value": 0.54088137120000002,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_4_0_control",
+				"target_name": "k_4_0",
+				"job": 1,
+				"min_value": 0.71523596928298838,
+				"max_value": 2.7152359692829884,
+				"p_value": 0.46000000000000002,
+				"p_mode": "log"
+			},
+			{
+				"name": "k_4_0_h251n",
+				"target_name": "k_4_0",
+				"job": 2,
+				"min_value": 0.0014654401477782741,
+				"max_value": 2.0014654401477783,
+				"p_value": 0.46000000000000002,
+				"p_mode": "log"
+			}
+		]
+	}
+}

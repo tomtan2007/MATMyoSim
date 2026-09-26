@@ -1,0 +1,13 @@
+group,stage,n_free_params,nrmse_percent,aic,aic_improvement_from_prior,best_stage_interpretation
+Control shared,k123,3,56.17,-1154.62,,inadequate
+Control shared,plus_k50,4,15.87,-3695.12,2540.50,dominant improvement
+Control shared,plus_k40,5,15.77,-3706.38,11.26,selected
+Control shared,plus_k73,6,15.77,-3704.39,-1.99,not supported
+H251N shared,k123,3,43.10,-1505.60,,inadequate
+H251N shared,plus_k50,4,5.24,-5287.85,3782.25,dominant improvement
+H251N shared,plus_k40,5,3.79,-5866.21,578.36,strong improvement
+H251N shared,plus_k73,6,3.75,-5883.95,17.75,selected and supported
+Control independent,k123,3,46.05,-1436.24,,inadequate
+Control independent,plus_k50,4,10.52,-4180.50,2744.26,dominant improvement
+Control independent,plus_k40,5,10.11,-4253.04,72.53,parsimonious selection
+Control independent,plus_k73,6,10.10,-4253.18,0.15,effectively tied with plus_k40

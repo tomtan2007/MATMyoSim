@@ -1,0 +1,14 @@
+{
+	"run_id": "feature_proto_hcm_trace_specific_20260916",
+	"run_dir": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_hcm_trace_specific_20260916",
+	"config_file": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_proto_hcm_trace_specific_20260916\\feature_optimization.json",
+	"initial_budget": 30,
+	"genotype": "H251N",
+	"alignment_policy": "independent_trace",
+	"parameter_names": [
+		"k_1",
+		"k_3",
+		"k_5_0"
+	],
+	"final_error": 11.072674742161649
+}

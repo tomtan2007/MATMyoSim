@@ -1,5 +1,5 @@
 function result = run_mava_feature_smoke_fit(max_fun_evals, run_id, ...
-        parameter_names, genotype)
+        parameter_names, genotype, alignment_policy)
 % Run a bounded optimizer smoke test on feature error.
 
 if nargin < 1 || isempty(max_fun_evals)
@@ -14,10 +14,18 @@ end
 if nargin < 4 || isempty(genotype)
     genotype = 'Control';
 end
+if nargin < 5 || isempty(alignment_policy)
+    alignment_policy = 'shared_by_genotype';
+end
 if ~isscalar(max_fun_evals) || max_fun_evals < 1 || ...
         max_fun_evals ~= floor(max_fun_evals)
     error('run_mava_feature_smoke_fit:badBudget', ...
         'max_fun_evals must be a positive integer.');
+end
+alignment_policy = char(string(alignment_policy));
+if ~ismember(alignment_policy, {'shared_by_genotype', 'independent_trace'})
+    error('run_mava_feature_smoke_fit:badAlignment', ...
+        'alignment_policy must be shared_by_genotype or independent_trace.');
 end
 
 script_dir = fileparts(mfilename('fullpath'));
@@ -31,16 +39,18 @@ if isfolder(run_dir)
     error('run_mava_feature_smoke_fit:existingRun', ...
         'Refusing to overwrite existing run: %s', run_dir);
 end
-data_dir = fullfile(run_dir, 'data', 'shared_by_genotype');
-prepare_mava_data([], data_dir, 'peak', 'shared_by_genotype');
+data_dir = fullfile(run_dir, 'data', alignment_policy);
+prepare_mava_data([], data_dir, 'peak', alignment_policy);
+fit_start_index = mava_reference_onset_index( ...
+    fullfile(data_dir, [genotype '_protocol.txt']));
 
 stage_id = strjoin(strrep(parameter_names, '_', ''), '_');
 stage = struct('id', stage_id, 'parameters', {parameter_names});
-settings = struct('fit_start_index', 481, ...
+settings = struct('fit_start_index', fit_start_index, ...
     'max_fun_evals', max_fun_evals, 'tol_fun', 1e-4, 'tol_x', 1e-3, ...
     'figure_current_fit', 0, 'figure_optimization_progress', 0);
 [base_config, record] = build_mava_sequential_fit_config(run_dir, ...
-    'shared_by_genotype', genotype, stage, 1, [], settings);
+    alignment_policy, genotype, stage, 1, [], settings);
 loaded = loadjson(base_config);
 opt = loaded.MyoSim_optimization;
 opt.fit_mode = 'fit_twitch_features';
@@ -73,7 +83,8 @@ plot_mava_feature_fit_review(best_sim, target, ...
 
 result = struct('run_id', run_id, 'run_dir', run_dir, ...
     'config_file', config_file, 'initial_budget', max_fun_evals, ...
-    'genotype', genotype, 'parameter_names', {parameter_names}, ...
+    'genotype', genotype, 'alignment_policy', alignment_policy, ...
+    'parameter_names', {parameter_names}, ...
     'final_error', final_error, 'fit_results', fit_results, ...
     'feature_details', feature_details);
 fid = fopen(fullfile(run_dir, 'smoke_summary.json'), 'w');

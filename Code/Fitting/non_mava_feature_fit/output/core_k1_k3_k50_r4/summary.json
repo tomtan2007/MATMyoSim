@@ -1,0 +1,15 @@
+{
+  "run_id": "core_k1_k3_k50_r4",
+  "stage_parameters": [
+    "k_1",
+    "k_3",
+    "k_5_0"
+  ],
+  "restarts": 4,
+  "max_fun_evals": 100,
+  "best_restart": 1,
+  "best_error": 0.5442922191219085,
+  "best_result_dir": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\core_k1_k3_k50_r4\\s01\\results\\joint_feature_fit",
+  "feature_aic_calculated": false,
+  "mava_data_used": false
+}

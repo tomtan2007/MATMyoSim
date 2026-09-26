@@ -1,0 +1,16 @@
+{
+  "run_id": "plus_k73_r4",
+  "stage_parameters": [
+    "k_1",
+    "k_3",
+    "k_5_0",
+    "k_7_3"
+  ],
+  "restarts": 4,
+  "max_fun_evals": 100,
+  "best_restart": 1,
+  "best_error": 0.543452124094916,
+  "best_result_dir": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\non_mava_feature_fit\\output\\plus_k73_r4\\s01\\results\\joint_feature_fit",
+  "feature_aic_calculated": false,
+  "mava_data_used": false
+}

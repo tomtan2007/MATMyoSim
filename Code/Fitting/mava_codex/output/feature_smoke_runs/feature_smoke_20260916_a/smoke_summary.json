@@ -1,0 +1,7 @@
+{
+	"run_id": "feature_smoke_20260916_a",
+	"run_dir": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a",
+	"config_file": "C:\\Users\\tomtan\\MATMyoSim\\Code\\Fitting\\mava_codex\\output\\feature_smoke_runs\\feature_smoke_20260916_a\\feature_optimization.json",
+	"initial_budget": 12,
+	"final_error": 20.958245644465613
+}

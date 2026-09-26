@@ -1,0 +1,17 @@
+{
+	"best_error": 1.173665553,
+	"best_objective": 1.173665553,
+	"job_errors": [1.386655518,0.9606755881],
+	"n_free_params": 6,
+	"n_active_points": "_NaN_",
+	"aic": "_NaN_",
+	"aic_note": "Feature objective uses correlated summary statistics; AIC is deferred until population feature variances are available.",
+	"timestamp": "2026-09-17 08:57:54",
+	"exitflag": 1,
+	"iterations": 130,
+	"func_count": 233,
+	"algorithm": "Nelder-Mead simplex direct search",
+	"message": "Optimization terminated:\n the current x satisfies the termination criteria using OPTIONS.TolX of 1.000000e-03 \n and F(X) satisfies the convergence criteria using OPTIONS.TolFun of 1.000000e-04 \n",
+	"tol_fun": 0.0001,
+	"tol_x": 0.001
+}
